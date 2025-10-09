@@ -36,7 +36,7 @@ function App() {
   const [chatMessages, setChatMessages] = useState([])
   const [chatInput, setChatInput] = useState('')
   const [receivedShares, setReceivedShares] = useState([])
-  const [showUserSections, setShowUserSections] = useState(false)
+
   const watchIdRef = useRef(null)
   const simulationRef = useRef(null)
   useSocket({
@@ -155,6 +155,8 @@ function App() {
     const request = shareRequests.find(req => req.requestId === requestId)
     if (accepted && request) {
       setReceivedShares(prev => [...prev, { id: request.from, name: request.fromName }])
+      // 수락 시 즉시 해당 사용자의 현재 위치 요청
+      socket.emit('requestCurrentLocation', { targetUserId: request.from })
     }
     socket.emit('respondLocationShare', { requestId, accepted })
     setShareRequests(prev => prev.filter(req => req.requestId !== requestId))
@@ -341,31 +343,18 @@ function App() {
           />
 
           <div className="section users-toggle-section">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h3 style={{ margin: 0 }}>다른 사용자</h3>
-              <button 
-                className="btn btn-secondary"
-                onClick={() => setShowUserSections(!showUserSections)}
-                style={{ padding: '6px 12px', fontSize: '11px' }}
-              >
-                {showUserSections ? '숨기기' : '보기'}
-              </button>
-            </div>
-            {showUserSections && (
-              <>
-                <SharedUsers 
-                  sharedUsers={sharedUsers}
-                  stopLocationShare={stopLocationShare}
-                />
-                <UserList 
-                  users={users}
-                  userId={userId}
-                  onRequestShare={(targetUserId) => {
-                    socket.emit('requestLocationShare', { targetUserId })
-                  }}
-                />
-              </>
-            )}
+            <h3>사용자 목록</h3>
+            <SharedUsers 
+              sharedUsers={sharedUsers}
+              stopLocationShare={stopLocationShare}
+            />
+            <UserList 
+              users={users}
+              userId={userId}
+              onRequestShare={(targetUserId) => {
+                socket.emit('requestLocationShare', { targetUserId })
+              }}
+            />
           </div>
         </div>
         
