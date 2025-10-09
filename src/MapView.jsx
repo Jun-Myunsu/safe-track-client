@@ -29,20 +29,21 @@ const userColors = {
 }
 
 // 지도 중심 업데이트 컴포넌트
-function MapUpdater({ currentLocation, locations }) {
+function MapUpdater({ currentLocation, locations, currentUserId }) {
   const map = useMap()
   
   useEffect(() => {
-    // 내 위치가 있으면 내 위치로 이동
-    if (currentLocation) {
-      map.setView([currentLocation.lat, currentLocation.lng], 16)
-    }
-    // 내 위치가 없고 공유받은 위치가 있으면 그 위치로 이동
-    else if (locations.length > 0) {
-      const latestLocation = locations[0]
+    // 공유받은 다른 사용자의 위치가 있으면 그 위치를 우선 표시
+    const otherUserLocations = locations.filter(loc => loc.userId !== currentUserId)
+    if (otherUserLocations.length > 0) {
+      const latestLocation = otherUserLocations[otherUserLocations.length - 1]
       map.setView([latestLocation.lat, latestLocation.lng], 16)
     }
-  }, [currentLocation, locations, map])
+    // 공유받은 위치가 없고 내 위치가 있으면 내 위치로 이동
+    else if (currentLocation) {
+      map.setView([currentLocation.lat, currentLocation.lng], 16)
+    }
+  }, [currentLocation, locations, currentUserId, map])
   
   return null
 }
@@ -60,7 +61,7 @@ function MapView({ locations, currentLocation, currentUserId, userPaths }) {
       zoom={14} 
       className="map-container"
     >
-      <MapUpdater currentLocation={currentLocation} locations={locations} />
+      <MapUpdater currentLocation={currentLocation} locations={locations} currentUserId={currentUserId} />
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'

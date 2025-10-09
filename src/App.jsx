@@ -36,6 +36,7 @@ function App() {
   const [chatMessages, setChatMessages] = useState([])
   const [chatInput, setChatInput] = useState('')
   const [receivedShares, setReceivedShares] = useState([])
+  const [showUserSections, setShowUserSections] = useState(false)
   const watchIdRef = useRef(null)
   const simulationRef = useRef(null)
   useSocket({
@@ -339,15 +340,33 @@ function App() {
             respondToRequest={respondToRequest}
           />
 
-          <SharedUsers 
-            sharedUsers={sharedUsers}
-            stopLocationShare={stopLocationShare}
-          />
-
-          <UserList 
-            users={users}
-            userId={userId}
-          />
+          <div className="section users-toggle-section">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0 }}>다른 사용자</h3>
+              <button 
+                className="btn btn-secondary"
+                onClick={() => setShowUserSections(!showUserSections)}
+                style={{ padding: '6px 12px', fontSize: '11px' }}
+              >
+                {showUserSections ? '숨기기' : '보기'}
+              </button>
+            </div>
+            {showUserSections && (
+              <>
+                <SharedUsers 
+                  sharedUsers={sharedUsers}
+                  stopLocationShare={stopLocationShare}
+                />
+                <UserList 
+                  users={users}
+                  userId={userId}
+                  onRequestShare={(targetUserId) => {
+                    socket.emit('requestLocationShare', { targetUserId })
+                  }}
+                />
+              </>
+            )}
+          </div>
         </div>
         
         <div className="map-section">
