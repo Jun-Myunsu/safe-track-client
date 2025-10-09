@@ -25,3 +25,6 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Server directory
+safe-track-server/

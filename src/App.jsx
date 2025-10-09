@@ -54,14 +54,11 @@ function App() {
     const saved = localStorage.getItem('safetrack_receivedShares')
     return saved ? JSON.parse(saved) : []
   })
+  const [showProfile, setShowProfile] = useState(false)
+  const [showUserList, setShowUserList] = useState(false)
 
   const watchIdRef = useRef(null)
   const simulationRef = useRef(null)
-  useSocket({
-    setSocket, isRegistered, userId, setUsers, setLocations, setUserPaths,
-    setShareRequests, setStatus, setSharedUsers, setReceivedShares,
-    setChatMessages, setIsRegistered, password, setUserIdAvailable, setIsCheckingUserId
-  })
 
   const checkUserId = (id) => {
     if (!id || isLoginMode) return
@@ -202,6 +199,10 @@ function App() {
   const stopLocationShare = (targetUserId) => {
     socket.emit('stopLocationShare', { targetUserId })
     setSharedUsers(prev => prev.filter(user => user.id !== targetUserId))
+    // 위치 추적 중지
+    if (isTracking || isSimulating) {
+      stopTracking()
+    }
     setStatus(`🚫 ${targetUserId}와의 위치 공유를 중지했습니다`)
     setTimeout(() => setStatus(''), 3000)
     // 채팅 메시지 초기화
@@ -210,11 +211,16 @@ function App() {
 
   const stopReceivingShare = (fromUserId) => {
     socket.emit('stopReceivingShare', { fromUserId })
+    socket.emit('stopLocationShare', { targetUserId: fromUserId })
     setReceivedShares(prev => prev.filter(user => user.id !== fromUserId))
     setLocations(prev => prev.filter(loc => loc.userId !== fromUserId))
-    setStatus(`🚫 ${fromUserId}의 위치 수신을 중지했습니다`)
+    setSharedUsers(prev => prev.filter(user => user.id !== fromUserId))
+    // 위치 추적 중지
+    if (isTracking || isSimulating) {
+      stopTracking()
+    }
+    setStatus(`🚫 ${fromUserId}와의 위치 공유를 완전히 중지했습니다`)
     setTimeout(() => setStatus(''), 3000)
-    // 채팅 메시지 초기화
     setChatMessages([])
   }
 
@@ -320,6 +326,13 @@ function App() {
     return Array.from(connected)
   }
 
+  useSocket({
+    setSocket, isRegistered, userId, setUsers, setLocations, setUserPaths,
+    setShareRequests, setStatus, setSharedUsers, setReceivedShares,
+    setChatMessages, setIsRegistered, password, setUserIdAvailable, setIsCheckingUserId,
+    startTracking, isTracking, isSimulating
+  })
+
   return (
     <div className="container">
       <div className="content-grid">
@@ -339,56 +352,82 @@ function App() {
               />
             ) : (
               <>
-                <h3>로그인 상태</h3>
-                <div className="status success">
-                  ✅ {userId}로 로그인 중
-                </div>
-                <button 
-                  className="btn" 
-                  onClick={() => {
-                    localStorage.removeItem('safetrack_userId')
-                    localStorage.removeItem('safetrack_isRegistered')
-                    setIsRegistered(false)
-                    setStatus('')
-                    setUserId('')
-                    setPassword('')
-                    setChatMessages([])
-                    setReceivedShares([])
-                    setSharedUsers([])
-                    if (isTracking || isSimulating) {
-                      stopTracking()
-                    }
-                  }}
-                  style={{ marginTop: '15px' }}
-                >
-                  로그아웃
-                </button>
+                {!showProfile ? (
+                  <button 
+                    className="profile-btn"
+                    onClick={() => setShowProfile(true)}
+                  >
+                    👤 {userId}
+                  </button>
+                ) : (
+                  <>
+                    <h3>로그인 상태</h3>
+                    <div className="status success">
+                      ✅ {userId}로 로그인 중
+                    </div>
+                    <button 
+                      className="btn" 
+                      onClick={() => {
+                        // 서버에 로그아웃 알림
+                        if (socket) {
+                          socket.emit('logout', { userId })
+                        }
+                        
+                        localStorage.removeItem('safetrack_userId')
+                        localStorage.removeItem('safetrack_isRegistered')
+                        localStorage.removeItem('safetrack_isTracking')
+                        localStorage.removeItem('safetrack_isSimulating')
+                        localStorage.removeItem('safetrack_currentLocation')
+                        localStorage.removeItem('safetrack_sharedUsers')
+                        localStorage.removeItem('safetrack_receivedShares')
+                        localStorage.removeItem('safetrack_chatMessages')
+                        
+                        setIsRegistered(false)
+                        setStatus('')
+                        setUserId('')
+                        setPassword('')
+                        setChatMessages([])
+                        setReceivedShares([])
+                        setSharedUsers([])
+                        
+                        if (isTracking || isSimulating) {
+                          stopTracking()
+                        }
+                      }}
+                      style={{ marginTop: '15px' }}
+                    >
+                      로그아웃
+                    </button>
+                    <button 
+                      className="btn" 
+                      onClick={() => setShowProfile(false)}
+                      style={{ marginTop: '10px', fontSize: '12px' }}
+                    >
+                      접기
+                    </button>
+                  </>
+                )}
               </>
             )}
             
             {status && <div className="status success">{status}</div>}
           </div>
 
-          <div className="section">
-            <LocationTracking 
-              isRegistered={isRegistered}
-              isTracking={isTracking}
-              isSimulating={isSimulating}
-              currentLocation={currentLocation}
-              startTracking={startTracking}
-              stopTracking={stopTracking}
-              startSimulation={startSimulation}
-            />
-          </div>
+          {receivedShares.length === 0 && (
+            <div className="section">
+              <LocationTracking 
+                isRegistered={isRegistered}
+                isTracking={isTracking}
+                isSimulating={isSimulating}
+                currentLocation={currentLocation}
+                startTracking={startTracking}
+                stopTracking={stopTracking}
+                startSimulation={startSimulation}
+              />
+            </div>
+          )}
 
-          <div className="section">
-            <LocationShare 
-              isRegistered={isRegistered}
-              targetUserId={targetUserId}
-              setTargetUserId={setTargetUserId}
-              requestLocationShare={requestLocationShare}
-            />
-          </div>
+
 
           <ShareRequests 
             shareRequests={shareRequests}
@@ -400,20 +439,34 @@ function App() {
             stopReceivingShare={stopReceivingShare}
           />
 
-          <div className="section users-toggle-section">
-            <h3>사용자 목록</h3>
-            <SharedUsers 
-              sharedUsers={sharedUsers}
-              stopLocationShare={stopLocationShare}
-            />
-            <UserList 
-              users={users}
-              userId={userId}
-              onRequestShare={(targetUserId) => {
-                socket.emit('requestLocationShare', { targetUserId })
-              }}
-            />
-          </div>
+          {isRegistered && (
+            <div className="section users-toggle-section">
+              <button 
+                className="btn" 
+                onClick={() => setShowUserList(!showUserList)}
+                style={{ width: '100%', marginBottom: showUserList ? '16px' : '0' }}
+              >
+                👥 사용자 목록 {showUserList ? '▲' : '▼'}
+              </button>
+              {showUserList && (
+                <>
+                  <SharedUsers 
+                    sharedUsers={sharedUsers}
+                    stopLocationShare={stopLocationShare}
+                  />
+                  <UserList 
+                    users={users}
+                    userId={userId}
+                    sharedUsers={sharedUsers}
+                    receivedShares={receivedShares}
+                    onRequestShare={(targetUserId) => {
+                      socket.emit('requestLocationShare', { targetUserId })
+                    }}
+                  />
+                </>
+              )}
+            </div>
+          )}
         </div>
         
         <div className="map-section">
