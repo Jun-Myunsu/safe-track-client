@@ -23,6 +23,7 @@ cp .env.example .env
 ### 3. 개발 서버 실행
 ```bash
 npm run dev
+# http://localhost:3001에서 실행
 ```
 
 ## Vercel 배포
