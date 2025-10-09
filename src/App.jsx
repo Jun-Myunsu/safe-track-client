@@ -6,8 +6,10 @@ import ChatSection from './components/ChatSection'
 import LocationShare from './components/LocationShare'
 import ShareRequests from './components/ShareRequests'
 import SharedUsers from './components/SharedUsers'
+import ReceivedShares from './components/ReceivedShares'
 import UserList from './components/UserList'
 import { useSocket } from './hooks/useSocket'
+import { saveAppState, clearAppState } from './utils/localStorage'
 
 function App() {
   const [socket, setSocket] = useState(null)
@@ -15,7 +17,9 @@ function App() {
     const saved = localStorage.getItem('safetrack_isRegistered')
     return saved === 'true'
   })
-  const [isTracking, setIsTracking] = useState(false)
+  const [isTracking, setIsTracking] = useState(() => {
+    return localStorage.getItem('safetrack_isTracking') === 'true'
+  })
   const [userId, setUserId] = useState(() => {
     const savedUsers = JSON.parse(localStorage.getItem('safetrack_users') || '[]')
     return savedUsers.length > 0 ? savedUsers[0].userId : ''
@@ -27,15 +31,29 @@ function App() {
   const [users, setUsers] = useState([])
   const [locations, setLocations] = useState([])
   const [userPaths, setUserPaths] = useState(new Map())
-  const [currentLocation, setCurrentLocation] = useState(null)
+  const [currentLocation, setCurrentLocation] = useState(() => {
+    const saved = localStorage.getItem('safetrack_currentLocation')
+    return saved ? JSON.parse(saved) : null
+  })
   const [status, setStatus] = useState('')
-  const [isSimulating, setIsSimulating] = useState(false)
+  const [isSimulating, setIsSimulating] = useState(() => {
+    return localStorage.getItem('safetrack_isSimulating') === 'true'
+  })
   const [shareRequests, setShareRequests] = useState([])
   const [targetUserId, setTargetUserId] = useState('')
-  const [sharedUsers, setSharedUsers] = useState([])
-  const [chatMessages, setChatMessages] = useState([])
+  const [sharedUsers, setSharedUsers] = useState(() => {
+    const saved = localStorage.getItem('safetrack_sharedUsers')
+    return saved ? JSON.parse(saved) : []
+  })
+  const [chatMessages, setChatMessages] = useState(() => {
+    const saved = localStorage.getItem('safetrack_chatMessages')
+    return saved ? JSON.parse(saved) : []
+  })
   const [chatInput, setChatInput] = useState('')
-  const [receivedShares, setReceivedShares] = useState([])
+  const [receivedShares, setReceivedShares] = useState(() => {
+    const saved = localStorage.getItem('safetrack_receivedShares')
+    return saved ? JSON.parse(saved) : []
+  })
 
   const watchIdRef = useRef(null)
   const simulationRef = useRef(null)
@@ -108,11 +126,26 @@ function App() {
           lng: longitude
         })
         
-        setCurrentLocation({ lat: latitude, lng: longitude })
+        const newLocation = { lat: latitude, lng: longitude }
+        setCurrentLocation(newLocation)
+        saveAppState.currentLocation(newLocation)
       },
       (error) => {
         console.error('위치 오류:', error)
-        alert(`위치를 가져올 수 없습니다: ${error.message}`)
+        let errorMessage = '위치를 가져올 수 없습니다'
+        
+        if (error.code === 1) {
+          errorMessage = '위치 접근이 거부되었습니다.\n\n아이폰: 설정 > 개인정보보호 > 위치서비스 > Safari > 사이트에서 위치 접근 허용'
+        } else if (error.code === 2) {
+          errorMessage = '위치를 찾을 수 없습니다. GPS를 확인해주세요.'
+        } else if (error.code === 3) {
+          errorMessage = '위치 요청 시간이 초과되었습니다.'
+        }
+        
+        alert(errorMessage)
+        setIsTracking(false)
+        saveAppState.isTracking('false')
+        socket.emit('stopTracking', { userId })
       },
       { 
         enableHighAccuracy: true, 
@@ -122,6 +155,7 @@ function App() {
     )
 
     setIsTracking(true)
+    saveAppState.isTracking('true')
   }
 
   const stopTracking = () => {
@@ -139,6 +173,9 @@ function App() {
     setIsTracking(false)
     setIsSimulating(false)
     setCurrentLocation(null)
+    saveAppState.isTracking('false')
+    saveAppState.isSimulating('false')
+    localStorage.removeItem('safetrack_currentLocation')
   }
 
   const requestLocationShare = () => {
@@ -166,6 +203,16 @@ function App() {
     socket.emit('stopLocationShare', { targetUserId })
     setSharedUsers(prev => prev.filter(user => user.id !== targetUserId))
     setStatus(`🚫 ${targetUserId}와의 위치 공유를 중지했습니다`)
+    setTimeout(() => setStatus(''), 3000)
+    // 채팅 메시지 초기화
+    setChatMessages([])
+  }
+
+  const stopReceivingShare = (fromUserId) => {
+    socket.emit('stopReceivingShare', { fromUserId })
+    setReceivedShares(prev => prev.filter(user => user.id !== fromUserId))
+    setLocations(prev => prev.filter(loc => loc.userId !== fromUserId))
+    setStatus(`🚫 ${fromUserId}의 위치 수신을 중지했습니다`)
     setTimeout(() => setStatus(''), 3000)
     // 채팅 메시지 초기화
     setChatMessages([])
@@ -199,10 +246,14 @@ function App() {
     socket.emit('startTracking', { userId })
     setIsTracking(true)
     setIsSimulating(true)
+    saveAppState.isTracking('true')
+    saveAppState.isSimulating('true')
     
     // 초기 위치 전송
     socket.emit('locationUpdate', { userId, lat: currentLat, lng: currentLng })
-    setCurrentLocation({ lat: currentLat, lng: currentLng })
+    const newLocation = { lat: currentLat, lng: currentLng }
+    setCurrentLocation(newLocation)
+    saveAppState.currentLocation(newLocation)
     
     simulationRef.current = setInterval(() => {
       step++
@@ -227,7 +278,9 @@ function App() {
       currentLng += (Math.random() - 0.5) * 0.00005
       
       socket.emit('locationUpdate', { userId, lat: currentLat, lng: currentLng })
-      setCurrentLocation({ lat: currentLat, lng: currentLng })
+      const newLocation = { lat: currentLat, lng: currentLng }
+      setCurrentLocation(newLocation)
+      saveAppState.currentLocation(newLocation)
     }, updateInterval) // 2초마다 업데이트
   }
 
@@ -340,6 +393,11 @@ function App() {
           <ShareRequests 
             shareRequests={shareRequests}
             respondToRequest={respondToRequest}
+          />
+
+          <ReceivedShares 
+            receivedShares={receivedShares}
+            stopReceivingShare={stopReceivingShare}
           />
 
           <div className="section users-toggle-section">
