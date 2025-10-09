@@ -1,4 +1,5 @@
-import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet'
+import { useEffect } from 'react'
 import L from 'leaflet'
 
 // 기본 마커 아이콘 설정
@@ -27,9 +28,28 @@ const userColors = {
   'user5': '#ff44ff'
 }
 
+// 지도 중심 업데이트 컴포넌트
+function MapUpdater({ currentLocation, locations }) {
+  const map = useMap()
+  
+  useEffect(() => {
+    // 내 위치가 있으면 내 위치로 이동
+    if (currentLocation) {
+      map.setView([currentLocation.lat, currentLocation.lng], 16)
+    }
+    // 내 위치가 없고 공유받은 위치가 있으면 그 위치로 이동
+    else if (locations.length > 0) {
+      const latestLocation = locations[0]
+      map.setView([latestLocation.lat, latestLocation.lng], 16)
+    }
+  }, [currentLocation, locations, map])
+  
+  return null
+}
+
 function MapView({ locations, currentLocation, currentUserId, userPaths }) {
-  // 실제 위치가 있으면 현재 위치로, 없으면 광주 시청으로 설정
-  const center = currentLocation ? [currentLocation.lat, currentLocation.lng] : [35.1595, 126.8526]
+  // 기본 중심점 (광주 시청)
+  const center = [35.1595, 126.8526]
     
   console.log('MapView - userPaths:', userPaths)
   console.log('MapView - locations:', locations)
@@ -40,6 +60,7 @@ function MapView({ locations, currentLocation, currentUserId, userPaths }) {
       zoom={14} 
       className="map-container"
     >
+      <MapUpdater currentLocation={currentLocation} locations={locations} />
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'

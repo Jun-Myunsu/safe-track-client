@@ -18,6 +18,12 @@ npm install
 ```bash
 cp .env.example .env
 # .env 파일에서 VITE_SERVER_URL 수정
+
+# 로컬 서버 테스트용:
+# VITE_SERVER_URL=http://localhost:3000
+
+# 배포된 서버 사용용:
+# VITE_SERVER_URL=https://safe-track-server.onrender.com
 ```
 
 ### 3. 개발 서버 실행

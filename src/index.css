@@ -41,6 +41,14 @@ body {
     grid-template-columns: 1fr;
     gap: 20px;
   }
+  
+  .sidebar {
+    order: 2;
+  }
+  
+  .map-section {
+    order: 1;
+  }
 }
 
 
