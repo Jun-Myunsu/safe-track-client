@@ -8,6 +8,8 @@ import ShareRequests from './components/ShareRequests'
 import SharedUsers from './components/SharedUsers'
 import ReceivedShares from './components/ReceivedShares'
 import UserList from './components/UserList'
+import UserSearch from './components/UserSearch'
+import FriendsList from './components/FriendsList'
 import { useSocket } from './hooks/useSocket'
 import { saveAppState, clearAppState } from './utils/localStorage'
 
@@ -17,12 +19,12 @@ function App() {
     const saved = localStorage.getItem('safetrack_isRegistered')
     return saved === 'true'
   })
+  const [isConnecting, setIsConnecting] = useState(true)
   const [isTracking, setIsTracking] = useState(() => {
     return localStorage.getItem('safetrack_isTracking') === 'true'
   })
   const [userId, setUserId] = useState(() => {
-    const savedUsers = JSON.parse(localStorage.getItem('safetrack_users') || '[]')
-    return savedUsers.length > 0 ? savedUsers[0].userId : ''
+    return localStorage.getItem('safetrack_userId') || ''
   })
   const [password, setPassword] = useState('')
   const [isLoginMode, setIsLoginMode] = useState(true)
@@ -56,6 +58,11 @@ function App() {
   })
   const [showProfile, setShowProfile] = useState(false)
   const [showUserList, setShowUserList] = useState(false)
+  const [showSearch, setShowSearch] = useState(false)
+  const [friends, setFriends] = useState(() => {
+    const saved = localStorage.getItem('safetrack_friends')
+    return saved ? JSON.parse(saved) : []
+  })
 
   const watchIdRef = useRef(null)
   const simulationRef = useRef(null)
@@ -311,6 +318,8 @@ function App() {
     setChatInput('')
   }
 
+
+
   const getConnectedUsers = () => {
     const connected = new Set()
     // 내가 공유하는 사용자들
@@ -327,10 +336,10 @@ function App() {
   }
 
   useSocket({
-    setSocket, isRegistered, userId, setUsers, setLocations, setUserPaths,
+    setSocket, isRegistered, userId, setUserId, setUsers, setLocations, setUserPaths,
     setShareRequests, setStatus, setSharedUsers, setReceivedShares,
     setChatMessages, setIsRegistered, password, setUserIdAvailable, setIsCheckingUserId,
-    startTracking, isTracking, isSimulating
+    startTracking, isTracking, isSimulating, friends, setFriends, setIsConnecting
   })
 
   return (
@@ -338,7 +347,11 @@ function App() {
       <div className="content-grid">
         <div className="sidebar">
           <div className="section">
-            {!isRegistered ? (
+            {isConnecting ? (
+              <div className="status">
+                🔄 서버 연결 중...
+              </div>
+            ) : !isRegistered ? (
               <AuthForm 
                 isLoginMode={isLoginMode}
                 setIsLoginMode={setIsLoginMode}
@@ -373,6 +386,7 @@ function App() {
                           socket.emit('logout', { userId })
                         }
                         
+                        localStorage.removeItem('safetrack_sessionId')
                         localStorage.removeItem('safetrack_userId')
                         localStorage.removeItem('safetrack_isRegistered')
                         localStorage.removeItem('safetrack_isTracking')
@@ -381,6 +395,7 @@ function App() {
                         localStorage.removeItem('safetrack_sharedUsers')
                         localStorage.removeItem('safetrack_receivedShares')
                         localStorage.removeItem('safetrack_chatMessages')
+                        localStorage.removeItem('safetrack_friends')
                         
                         setIsRegistered(false)
                         setStatus('')
@@ -454,14 +469,29 @@ function App() {
                     sharedUsers={sharedUsers}
                     stopLocationShare={stopLocationShare}
                   />
-                  <UserList 
-                    users={users}
-                    userId={userId}
-                    sharedUsers={sharedUsers}
-                    receivedShares={receivedShares}
+                  <button 
+                    className="btn" 
+                    onClick={() => setShowSearch(!showSearch)}
+                    style={{ width: '100%', marginBottom: showSearch ? '16px' : '8px' }}
+                  >
+                    🔍 사용자 검색 {showSearch ? '▲' : '▼'}
+                  </button>
+                  {showSearch && (
+                    <UserSearch 
+                      socket={socket}
+                      userId={userId}
+                      friends={friends}
+                      setStatus={setStatus}
+                    />
+                  )}
+                  <FriendsList 
+                    friends={friends}
                     onRequestShare={(targetUserId) => {
                       socket.emit('requestLocationShare', { targetUserId })
                     }}
+                    sharedUsers={sharedUsers}
+                    receivedShares={receivedShares}
+                    socket={socket}
                   />
                 </>
               )}

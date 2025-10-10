@@ -12,23 +12,39 @@ export function useSocket(handlers) {
     
     let isAutoLogin = false
 
-    if (handlers.isRegistered && handlers.userId) {
-      // 저장된 비밀번호로 자동 로그인 (비동기 처리)
+    // 세션 기반 자동 로그인 처리
+    const sessionId = localStorage.getItem('safetrack_sessionId')
+    const savedUserId = localStorage.getItem('safetrack_userId')
+    const isRegisteredSaved = localStorage.getItem('safetrack_isRegistered') === 'true'
+    
+    if (sessionId && savedUserId && isRegisteredSaved) {
+      setTimeout(() => {
+        isAutoLogin = true
+        newSocket.emit('validateSession', { sessionId })
+      }, 50)
+    } else if (handlers.isRegistered && handlers.userId) {
+      // 기존 비밀번호 방식 호환성
       setTimeout(() => {
         const savedUsers = JSON.parse(localStorage.getItem('safetrack_users') || '[]')
         const savedUser = savedUsers.find(user => user.userId === handlers.userId)
         if (savedUser) {
           isAutoLogin = true
           newSocket.emit('login', { userId: handlers.userId, password: savedUser.password })
-        } else {
-          newSocket.emit('reconnect', { userId: handlers.userId })
         }
       }, 50)
     }
 
     // 이벤트 리스너 등록
     Object.entries({
-      userList: handlers.setUsers,
+      userList: (users) => {
+        handlers.setUsers(users)
+        if (handlers.friends && handlers.setFriends) {
+          handlers.setFriends(prev => prev.map(friend => {
+            const onlineUser = users.find(user => user.id === friend.id)
+            return onlineUser ? { ...friend, isOnline: onlineUser.isOnline, isTracking: onlineUser.isTracking } : friend
+          }))
+        }
+      },
       trackingStatusUpdate: (data) => {
         handlers.setUsers(prev => prev.map(user => 
           user.id === data.userId 
@@ -99,13 +115,8 @@ export function useSocket(handlers) {
         handlers.setIsRegistered(true)
         handlers.setStatus(`✅ ${data.userId}로 등록 완료`)
         
-        const savedUsers = JSON.parse(localStorage.getItem('safetrack_users') || '[]')
-        const existingIndex = savedUsers.findIndex(user => user.userId === data.userId)
-        if (existingIndex === -1) {
-          savedUsers.push({ userId: data.userId, password: handlers.password })
-          localStorage.setItem('safetrack_users', JSON.stringify(savedUsers))
-        }
-        
+        // 세션 저장
+        localStorage.setItem('safetrack_sessionId', data.sessionId)
         localStorage.setItem('safetrack_userId', data.userId)
         localStorage.setItem('safetrack_isRegistered', 'true')
         setTimeout(() => handlers.setStatus(''), 3000)
@@ -117,27 +128,38 @@ export function useSocket(handlers) {
       loginSuccess: (data) => {
         handlers.setIsRegistered(true)
         
-        if (isAutoLogin) {
-          // 자동 로그인 성공 시 플래그 리셋
-          isAutoLogin = false
-        } else {
-          // 수동 로그인 성공 시 메시지 표시
-          handlers.setStatus(`✅ ${data.userId}로 로그인 성공`)
-          setTimeout(() => handlers.setStatus(''), 3000)
-          
-          // 수동 로그인 시에만 비밀번호 저장
-          const savedUsers = JSON.parse(localStorage.getItem('safetrack_users') || '[]')
-          const existingIndex = savedUsers.findIndex(user => user.userId === data.userId)
-          if (existingIndex === -1) {
-            savedUsers.push({ userId: data.userId, password: handlers.password })
-          } else {
-            savedUsers[existingIndex].password = handlers.password
-          }
-          localStorage.setItem('safetrack_users', JSON.stringify(savedUsers))
-        }
-        
+        // 세션 저장
+        localStorage.setItem('safetrack_sessionId', data.sessionId)
         localStorage.setItem('safetrack_userId', data.userId)
         localStorage.setItem('safetrack_isRegistered', 'true')
+        
+        if (!isAutoLogin) {
+          handlers.setStatus(`✅ ${data.userId}로 로그인 성공`)
+          setTimeout(() => handlers.setStatus(''), 3000)
+        }
+        
+        isAutoLogin = false
+        
+        // 친구 목록 요청
+        setTimeout(() => {
+          newSocket.emit('getFriends')
+        }, 100)
+      },
+      sessionValid: (data) => {
+        handlers.setIsRegistered(true)
+        // userId 설정
+        if (data.userId && handlers.setUserId) {
+          handlers.setUserId(data.userId)
+        }
+        // 친구 목록 요청
+        setTimeout(() => {
+          newSocket.emit('getFriends')
+        }, 100)
+      },
+      sessionInvalid: () => {
+        handlers.setIsRegistered(false)
+        localStorage.removeItem('safetrack_sessionId')
+        localStorage.removeItem('safetrack_isRegistered')
       },
       loginError: (data) => {
         if (isAutoLogin) {
@@ -154,6 +176,28 @@ export function useSocket(handlers) {
       userIdCheckResult: (data) => {
         handlers.setUserIdAvailable(data.isAvailable)
         handlers.setIsCheckingUserId(false)
+      },
+      friendAdded: (data) => {
+        const newFriend = { id: data.friendId, name: data.friendId, isOnline: false, isTracking: false }
+        handlers.setFriends(prev => {
+          const updated = [...prev, newFriend]
+          localStorage.setItem('safetrack_friends', JSON.stringify(updated))
+          return updated
+        })
+      },
+      friendsList: (data) => {
+        handlers.setFriends(data.friends)
+        localStorage.setItem('safetrack_friends', JSON.stringify(data.friends))
+      },
+      friendRemoved: (data) => {
+        handlers.setFriends(prev => {
+          const updated = prev.filter(friend => friend.id !== data.friendId)
+          localStorage.setItem('safetrack_friends', JSON.stringify(updated))
+          return updated
+        })
+      },
+      searchResults: (data) => {
+        // UserSearch 컴포넌트에서 처리
       }
     }).forEach(([event, handler]) => {
       newSocket.on(event, handler)
@@ -162,18 +206,29 @@ export function useSocket(handlers) {
     // 연결 성공 시 자동 로그인
     newSocket.on('connect', () => {
       console.log('서버 연결 성공')
-      if (handlers.isRegistered && handlers.userId) {
+      handlers.setIsConnecting(false)
+      
+      const sessionId = localStorage.getItem('safetrack_sessionId')
+      const savedUserId = localStorage.getItem('safetrack_userId')
+      const isRegisteredSaved = localStorage.getItem('safetrack_isRegistered') === 'true'
+      
+      if (sessionId && savedUserId && isRegisteredSaved) {
+        isAutoLogin = true
+        newSocket.emit('validateSession', { sessionId })
+      } else if (handlers.isRegistered && handlers.userId) {
+        // 기존 비밀번호 방식 호환성
         const savedUsers = JSON.parse(localStorage.getItem('safetrack_users') || '[]')
         const savedUser = savedUsers.find(user => user.userId === handlers.userId)
         if (savedUser) {
           isAutoLogin = true
           newSocket.emit('login', { userId: handlers.userId, password: savedUser.password })
-          // 로그인 후 사용자 목록 즉시 요청
-          setTimeout(() => {
-            newSocket.emit('getUserList')
-          }, 100)
         }
       }
+    })
+
+    newSocket.on('disconnect', () => {
+      console.log('서버 연결 끊어짐')
+      handlers.setIsConnecting(true)
     })
 
     return () => newSocket.close()
