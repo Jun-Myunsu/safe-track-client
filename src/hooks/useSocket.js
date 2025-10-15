@@ -226,11 +226,26 @@ export function useSocket(handlers) {
       }
     })
 
+    // Keep-alive: 5분마다 서버에 ping 전송
+    const keepAliveInterval = setInterval(() => {
+      if (newSocket.connected) {
+        newSocket.emit('ping')
+      }
+    }, 5 * 60 * 1000)
+
+    // 연결 끊어지면 keep-alive 중지
+    newSocket.on('disconnect', () => {
+      clearInterval(keepAliveInterval)
+    })
+
     newSocket.on('disconnect', () => {
       console.log('서버 연결 끊어짐')
       handlers.setIsConnecting(true)
     })
 
-    return () => newSocket.close()
+    return () => {
+      clearInterval(keepAliveInterval)
+      newSocket.close()
+    }
   }, [])
 }
