@@ -70,6 +70,15 @@ export function useSocket(handlers) {
       },
       locationShareRequest: (data) => handlers.setShareRequests(prev => [...prev, data]),
       locationShareResponse: (data) => {
+        // 대기 중인 요청에서 제거
+        if (handlers.setPendingRequests) {
+          handlers.setPendingRequests(prev => {
+            const newSet = new Set(prev)
+            newSet.delete(data.targetUserId)
+            return newSet
+          })
+        }
+        
         if (data.accepted) {
           handlers.setStatus(`✅ ${data.targetName}이 내 위치 공유를 수락했습니다`)
           handlers.setSharedUsers(prev => [...prev, { id: data.targetUserId, name: data.targetName }])
@@ -100,10 +109,22 @@ export function useSocket(handlers) {
       shareRequestError: (data) => {
         handlers.setStatus(`❌ ${data.message}`)
         setTimeout(() => handlers.setStatus(''), 3000)
+        // 오류 시 대기 중인 요청에서 제거
+        if (handlers.setPendingRequests && data.targetUserId) {
+          handlers.setPendingRequests(prev => {
+            const newSet = new Set(prev)
+            newSet.delete(data.targetUserId)
+            return newSet
+          })
+        }
       },
       shareRequestSent: (data) => {
         handlers.setStatus(`📱 ${data.targetName}에게 내 위치 공유 요청을 보냈습니다`)
         setTimeout(() => handlers.setStatus(''), 3000)
+        // 대기 중인 요청에 추가
+        if (handlers.setPendingRequests) {
+          handlers.setPendingRequests(prev => new Set([...prev, data.targetUserId]))
+        }
       },
       messageReceived: (data) => handlers.setChatMessages(prev => [...prev, { ...data, type: 'received' }]),
       messageSent: (data) => handlers.setChatMessages(prev => [...prev, { ...data, type: 'sent' }]),

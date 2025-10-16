@@ -63,6 +63,7 @@ function App() {
     const saved = localStorage.getItem('safetrack_friends')
     return saved ? JSON.parse(saved) : []
   })
+  const [pendingRequests, setPendingRequests] = useState(new Set())
 
   const watchIdRef = useRef(null)
   const simulationRef = useRef(null)
@@ -339,7 +340,8 @@ function App() {
     setSocket, isRegistered, userId, setUserId, setUsers, setLocations, setUserPaths,
     setShareRequests, setStatus, setSharedUsers, setReceivedShares,
     setChatMessages, setIsRegistered, password, setUserIdAvailable, setIsCheckingUserId,
-    startTracking, isTracking, isSimulating, friends, setFriends, setIsConnecting
+    startTracking, isTracking, isSimulating, friends, setFriends, setIsConnecting,
+    pendingRequests, setPendingRequests
   })
 
   return (
@@ -492,6 +494,7 @@ function App() {
                     sharedUsers={sharedUsers}
                     receivedShares={receivedShares}
                     socket={socket}
+                    pendingRequests={pendingRequests}
                   />
                 </>
               )}

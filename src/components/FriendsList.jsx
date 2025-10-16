@@ -1,4 +1,4 @@
-function FriendsList({ friends, onRequestShare, sharedUsers, receivedShares, socket }) {
+function FriendsList({ friends, onRequestShare, sharedUsers, receivedShares, socket, pendingRequests }) {
   const isAlreadySharing = (targetUserId) => {
     return sharedUsers.some(user => user.id === targetUserId) || 
            receivedShares.some(user => user.id === targetUserId)
@@ -36,15 +36,15 @@ function FriendsList({ friends, onRequestShare, sharedUsers, receivedShares, soc
               {friend.isOnline && (
                 <button 
                   className={`btn ${alreadySharing ? 'btn-secondary' : 'btn-secondary'}`}
-                  onClick={() => !alreadySharing && onRequestShare(friend.id)}
-                  disabled={alreadySharing}
+                  onClick={() => !alreadySharing && !pendingRequests.has(friend.id) && onRequestShare(friend.id)}
+                  disabled={alreadySharing || pendingRequests.has(friend.id)}
                   style={{ 
                     fontSize: '10px', 
                     padding: '4px 8px',
-                    opacity: alreadySharing ? 0.5 : 1
+                    opacity: (alreadySharing || pendingRequests.has(friend.id)) ? 0.5 : 1
                   }}
                 >
-                  {alreadySharing ? '공유중' : '요청'}
+                  {alreadySharing ? '공유중' : pendingRequests.has(friend.id) ? '요청중' : '요청'}
                 </button>
               )}
               <button 
