@@ -380,48 +380,50 @@ function App() {
                     <div className="status success">
                       ✅ {userId}로 로그인 중
                     </div>
-                    <button 
-                      className="btn" 
-                      onClick={() => {
-                        // 서버에 로그아웃 알림
-                        if (socket) {
-                          socket.emit('logout', { userId })
-                        }
-                        
-                        localStorage.removeItem('safetrack_sessionId')
-                        localStorage.removeItem('safetrack_userId')
-                        localStorage.removeItem('safetrack_isRegistered')
-                        localStorage.removeItem('safetrack_isTracking')
-                        localStorage.removeItem('safetrack_isSimulating')
-                        localStorage.removeItem('safetrack_currentLocation')
-                        localStorage.removeItem('safetrack_sharedUsers')
-                        localStorage.removeItem('safetrack_receivedShares')
-                        localStorage.removeItem('safetrack_chatMessages')
-                        localStorage.removeItem('safetrack_friends')
-                        
-                        setIsRegistered(false)
-                        setStatus('')
-                        setUserId('')
-                        setPassword('')
-                        setChatMessages([])
-                        setReceivedShares([])
-                        setSharedUsers([])
-                        
-                        if (isTracking || isSimulating) {
-                          stopTracking()
-                        }
-                      }}
-                      style={{ marginTop: '15px' }}
-                    >
-                      로그아웃
-                    </button>
-                    <button 
-                      className="btn" 
-                      onClick={() => setShowProfile(false)}
-                      style={{ marginTop: '10px', fontSize: '12px' }}
-                    >
-                      접기
-                    </button>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', marginTop: '15px' }}>
+                      <button
+                        className="btn"
+                        onClick={() => {
+                          // 서버에 로그아웃 알림
+                          if (socket) {
+                            socket.emit('logout', { userId })
+                          }
+
+                          localStorage.removeItem('safetrack_sessionId')
+                          localStorage.removeItem('safetrack_userId')
+                          localStorage.removeItem('safetrack_isRegistered')
+                          localStorage.removeItem('safetrack_isTracking')
+                          localStorage.removeItem('safetrack_isSimulating')
+                          localStorage.removeItem('safetrack_currentLocation')
+                          localStorage.removeItem('safetrack_sharedUsers')
+                          localStorage.removeItem('safetrack_receivedShares')
+                          localStorage.removeItem('safetrack_chatMessages')
+                          localStorage.removeItem('safetrack_friends')
+
+                          setIsRegistered(false)
+                          setStatus('')
+                          setUserId('')
+                          setPassword('')
+                          setChatMessages([])
+                          setReceivedShares([])
+                          setSharedUsers([])
+
+                          if (isTracking || isSimulating) {
+                            stopTracking()
+                          }
+                        }}
+                        style={{ flex: 1 }}
+                      >
+                        로그아웃
+                      </button>
+                      <button
+                        className="btn"
+                        onClick={() => setShowProfile(false)}
+                        style={{ flex: 1 }}
+                      >
+                        접기
+                      </button>
+                    </div>
                   </>
                 )}
               </>
@@ -432,7 +434,7 @@ function App() {
 
           {receivedShares.length === 0 && (
             <div className="section">
-              <LocationTracking 
+              <LocationTracking
                 isRegistered={isRegistered}
                 isTracking={isTracking}
                 isSimulating={isSimulating}

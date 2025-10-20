@@ -10,6 +10,21 @@ function ChatSection({
 }) {
   const chatMessagesRef = useRef(null)
 
+  // 사용자별 이모지를 저장하는 객체
+  const userEmojis = useRef({})
+
+  // 랜덤 이모지 배열
+  const emojiList = ['🎮', '👾', '🤖', '👽', '🚀', '⭐', '💎', '🔥', '⚡', '💫', '🌟', '✨', '🎯', '🎲', '🎪', '🎨', '🎭', '🎸', '🎹', '🎺']
+
+  // 사용자에게 이모지 할당
+  const getUserEmoji = (username) => {
+    if (!userEmojis.current[username]) {
+      const randomEmoji = emojiList[Math.floor(Math.random() * emojiList.length)]
+      userEmojis.current[username] = randomEmoji
+    }
+    return userEmojis.current[username]
+  }
+
   useEffect(() => {
     if (chatMessagesRef.current) {
       chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight
@@ -19,115 +34,145 @@ function ChatSection({
   return (
     <div className="chat-section" style={{
       marginTop: '15px',
-      borderRadius: '12px',
-      backgroundColor: '#ffffff',
-      boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-      overflow: 'hidden'
+      borderRadius: '0',
+      backgroundColor: '#1e1e1e',
+      border: '3px solid #3d3d3d',
+      overflow: 'hidden',
+      fontFamily: '"Courier New", monospace'
     }}>
-      <div 
+      <div
         ref={chatMessagesRef}
-        className="chat-messages" 
+        className="chat-messages"
         style={{
           height: '200px',
           padding: '15px',
           overflowY: 'auto',
-          backgroundColor: '#fafafa',
-          borderBottom: '1px solid #e0e0e0'
+          backgroundColor: '#252526',
+          fontFamily: '"Courier New", monospace',
+          fontSize: '14px',
+          lineHeight: '1.6'
         }}
       >
         {chatMessages.length === 0 ? (
-          <div style={{ 
-            color: '#999', 
-            textAlign: 'center',
+          <div style={{
+            color: '#6a9955',
             fontSize: '14px',
-            marginTop: '40px'
+            fontFamily: '"Courier New", monospace'
           }}>
-            💬 연결된 사용자와 채팅하세요
+            // 연결된 사용자와 채팅하세요
           </div>
         ) : (
           chatMessages.map((msg, index) => (
             <div key={index} style={{
-              marginBottom: '12px',
+              marginBottom: '8px',
+              fontFamily: '"Courier New", monospace',
               display: 'flex',
-              justifyContent: msg.type === 'sent' ? 'flex-end' : 'flex-start'
+              flexDirection: 'column',
+              alignItems: msg.type === 'sent' ? 'flex-end' : 'flex-start'
             }}>
-              <div style={{
-                maxWidth: '75%',
-                padding: '8px 12px',
-                borderRadius: msg.type === 'sent' ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-                backgroundColor: msg.type === 'sent' ? '#007bff' : '#ffffff',
-                color: msg.type === 'sent' ? 'white' : '#333',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                position: 'relative'
-              }}>
-                {msg.type === 'received' && (
-                  <div style={{ 
-                    fontSize: '11px', 
-                    opacity: 0.7,
-                    marginBottom: '2px',
-                    fontWeight: '500'
-                  }}>
-                    {msg.from}
-                  </div>
-                )}
-                <div style={{ fontSize: '14px', lineHeight: '1.4' }}>
-                  {msg.message}
+              {msg.type === 'received' && (
+                <div style={{
+                  color: '#4ec9b0',
+                  fontSize: '14px',
+                  fontFamily: '"Courier New", monospace',
+                  textAlign: 'left'
+                }}>
+                  {'>'} {getUserEmoji(msg.from)} {msg.from}:
                 </div>
-                <div style={{ 
-                  fontSize: '10px', 
-                  opacity: 0.6,
-                  marginTop: '2px',
+              )}
+              {msg.type === 'sent' && (
+                <div style={{
+                  color: '#dcdcaa',
+                  fontSize: '14px',
+                  fontFamily: '"Courier New", monospace',
                   textAlign: 'right'
                 }}>
-                  {new Date(msg.timestamp).toLocaleTimeString('ko-KR', {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
+                  YOU 🎯: {'<'}
                 </div>
+              )}
+              <div style={{
+                color: msg.type === 'sent' ? '#dcdcaa' : '#ce9178',
+                fontSize: '14px',
+                paddingLeft: msg.type === 'received' ? '20px' : '0',
+                paddingRight: msg.type === 'sent' ? '20px' : '0',
+                fontFamily: '"Courier New", monospace'
+              }}>
+                {msg.message}
+              </div>
+              <div style={{
+                color: '#6a9955',
+                fontSize: '12px',
+                paddingLeft: msg.type === 'received' ? '20px' : '0',
+                paddingRight: msg.type === 'sent' ? '20px' : '0',
+                fontFamily: '"Courier New", monospace',
+                opacity: 0.7,
+                textAlign: msg.type === 'sent' ? 'right' : 'left'
+              }}>
+                // {new Date(msg.timestamp).toLocaleTimeString('ko-KR', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  second: '2-digit'
+                })}
               </div>
             </div>
           ))
         )}
       </div>
+
+      {/* 입력 영역 */}
       <div style={{
-        padding: '12px',
-        backgroundColor: '#ffffff',
+        padding: '0',
+        backgroundColor: '#252526',
+        borderTop: '2px solid #3d3d3d',
         display: 'flex',
-        gap: '8px',
         alignItems: 'center'
       }}>
+        <div style={{
+          padding: '10px 12px',
+          color: '#569cd6',
+          fontSize: '14px',
+          fontFamily: '"Courier New", monospace',
+          borderRight: '2px solid #3d3d3d'
+        }}>
+          {'> '}
+        </div>
         <input
           type="text"
-          placeholder="메시지를 입력하세요..."
+          placeholder="type message here..."
           value={chatInput}
           onChange={(e) => setChatInput(e.target.value)}
           onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
           disabled={!isRegistered || getConnectedUsers().length === 0}
           style={{
             flex: 1,
-            padding: '10px 15px',
-            border: '1px solid #e0e0e0',
-            borderRadius: '20px',
+            padding: '10px 12px',
+            border: 'none',
             fontSize: '14px',
             outline: 'none',
-            backgroundColor: '#f8f9fa'
+            backgroundColor: '#1e1e1e',
+            color: '#d4d4d4',
+            fontFamily: '"Courier New", monospace'
           }}
         />
-        <button 
+        <button
           onClick={sendMessage}
           disabled={!chatInput.trim() || !isRegistered || getConnectedUsers().length === 0}
           style={{
-            padding: '10px 16px',
-            backgroundColor: chatInput.trim() && isRegistered && getConnectedUsers().length > 0 ? '#007bff' : '#ccc',
-            color: 'white',
-            border: 'none',
-            borderRadius: '20px',
-            fontSize: '14px',
+            padding: '10px 20px',
+            backgroundColor: '#1e1e1e',
+            color: chatInput.trim() && isRegistered && getConnectedUsers().length > 0 ? '#00ff00' : '#666666',
+            border: '2px solid',
+            borderColor: chatInput.trim() && isRegistered && getConnectedUsers().length > 0 ? '#00ff00' : '#3d3d3d',
+            borderLeft: '2px solid #3d3d3d',
+            fontSize: '12px',
             cursor: chatInput.trim() && isRegistered && getConnectedUsers().length > 0 ? 'pointer' : 'not-allowed',
-            transition: 'background-color 0.2s'
+            transition: 'all 0.2s',
+            fontFamily: '"Courier New", monospace',
+            fontWeight: 'bold',
+            textTransform: 'uppercase'
           }}
         >
-          전송
+          [SEND]
         </button>
       </div>
     </div>

@@ -27,12 +27,12 @@ function LocationTracking({
         </button>
       </div>
       
-      {isTracking && (
+      {isTracking && !isSimulating && (
         <div className="status tracking">
           실제 위치 추적 중
         </div>
       )}
-      
+
       {isSimulating && (
         <div className="status tracking">
           가상 이동 시뮬레이션 중
