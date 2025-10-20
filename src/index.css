@@ -131,7 +131,7 @@ body {
 .btn {
   padding: 10px 20px;
   border: 3px solid #2d1b4e;
-  background: #9b7fc9;
+  background: #ff1493;
   color: #ffffff;
   cursor: pointer;
   font-size: 1.3rem;
@@ -144,7 +144,7 @@ body {
   position: relative;
   overflow: hidden;
   text-transform: uppercase;
-  box-shadow: 5px 5px 0px #b8a5d6;
+  box-shadow: 5px 5px 0px #ff69b4;
 }
 
 .btn::before {
@@ -168,8 +168,8 @@ body {
 }
 
 .btn:hover {
-  background: #b399d9;
-  box-shadow: 6px 6px 0px #d4c5e8;
+  background: #ff69b4;
+  box-shadow: 6px 6px 0px #ffb6d9;
 }
 
 @media (max-width: 1024px) {
@@ -202,10 +202,10 @@ body {
 }
 
 .btn-primary {
-  background: #7b68a6;
+  background: #ff1493;
   border-color: #2d1b4e;
   color: #ffffff;
-  box-shadow: 5px 5px 0px #b8a5d6;
+  box-shadow: 5px 5px 0px #ff69b4;
 }
 
 .btn-primary::before {
@@ -218,8 +218,8 @@ body {
 }
 
 .btn-primary:hover {
-  background: #9180b8;
-  box-shadow: 6px 6px 0px #d4c5e8;
+  background: #ff69b4;
+  box-shadow: 6px 6px 0px #ffb6d9;
 }
 
 .btn-secondary {
@@ -441,7 +441,7 @@ p {
   width: 100%;
   padding: 12px 16px;
   border: 3px solid #2d1b4e;
-  background: #9b7fc9;
+  background: #ff1493;
   color: #ffffff;
   cursor: pointer;
   font-size: 1.3rem;
@@ -450,11 +450,11 @@ p {
   border-radius: 0;
   font-family: "VT323", monospace;
   text-align: left;
-  box-shadow: 5px 5px 0px #b8a5d6;
+  box-shadow: 5px 5px 0px #ff69b4;
   text-transform: uppercase;
 }
 
 .profile-btn:hover {
-  background: #b399d9;
-  box-shadow: 6px 6px 0px #d4c5e8;
+  background: #ff69b4;
+  box-shadow: 6px 6px 0px #ffb6d9;
 }
