@@ -248,6 +248,20 @@ body {
   transform: scale(1.02);
 }
 
+.btn-remove {
+  background: #6c757d;
+  border-color: #2d1b4e;
+  color: #ffffff;
+  box-shadow: 5px 5px 0px #8d959d;
+  font-weight: bold;
+}
+
+.btn-remove:hover {
+  background: #7d8690;
+  box-shadow: 6px 6px 0px #a5abb1;
+  transform: scale(1.02);
+}
+
 .btn:disabled {
   background: #cccccc;
   border-color: #999999;
