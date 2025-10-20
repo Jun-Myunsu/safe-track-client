@@ -302,6 +302,17 @@ body {
   color: #0080ff;
 }
 
+@keyframes gentle-pulse {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 4px 4px 0px #d4c5e8;
+  }
+  50% {
+    opacity: 0.7;
+    box-shadow: 4px 4px 0px #d4c5e8, 0px 0px 15px rgba(147, 112, 219, 0.4);
+  }
+}
+
 .user-item {
   padding: 16px;
   margin: 0 0 12px 0;
@@ -319,6 +330,11 @@ body {
 .user-item:hover {
   background: #fffacd;
   box-shadow: 5px 5px 0px #d4c5e8;
+}
+
+.user-item.sharing {
+  animation: gentle-pulse 3s ease-in-out infinite;
+  border-color: #ff6b9d;
 }
 
 @media (max-width: 1024px) {
