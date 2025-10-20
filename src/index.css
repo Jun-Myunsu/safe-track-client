@@ -223,15 +223,15 @@ body {
 }
 
 .btn-secondary {
-  background: #a5d6d8;
+  background: #ffaa00;
   border-color: #2d1b4e;
-  color: #2d1b4e;
-  box-shadow: 5px 5px 0px #c9e8e9;
+  color: #ffffff;
+  box-shadow: 5px 5px 0px #ffcc44;
 }
 
 .btn-secondary:hover {
-  background: #b8e0e2;
-  box-shadow: 6px 6px 0px #d9f0f1;
+  background: #ff8800;
+  box-shadow: 6px 6px 0px #ffdd66;
 }
 
 .btn-danger {
@@ -268,12 +268,16 @@ body {
   border-radius: 0;
   color: #2d1b4e;
   font-family: "VT323", monospace;
+  box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.12);
+  position: relative;
+  z-index: 1;
 }
 
 .status.success {
   background: #d4ffd4;
   border-color: #00ff00;
   color: #008000;
+  box-shadow: 4px 4px 0px rgba(0, 255, 128, 0.22), 7px 7px 0px rgba(0, 0, 0, 0.08);
 }
 
 .status.tracking {

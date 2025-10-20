@@ -27,23 +27,11 @@ function LocationTracking({
         </button>
       </div>
       
-      {isTracking && !isSimulating && (
-        <div className="status tracking">
-          실제 위치 추적 중
-        </div>
-      )}
 
-      {isSimulating && (
-        <div className="status tracking">
-          가상 이동 시뮬레이션 중
-        </div>
-      )}
+
+
       
-      {currentLocation && (
-        <div className="location-coords">
-          현재 위치: {currentLocation.lat.toFixed(6)}, {currentLocation.lng.toFixed(6)}
-        </div>
-      )}
+
     </>
   )
 }
