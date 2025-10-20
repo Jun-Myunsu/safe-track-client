@@ -1,5 +1,5 @@
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import L from 'leaflet'
 
 // 기본 마커 아이콘 설정
@@ -51,21 +51,59 @@ function MapUpdater({ currentLocation, locations, currentUserId }) {
 function MapView({ locations, currentLocation, currentUserId, userPaths }) {
   // 기본 중심점 (광주 시청)
   const center = [35.1595, 126.8526]
+  const [mapType, setMapType] = useState('street')
+  
+  const mapTypes = {
+    street: {
+      url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    },
+    satellite: {
+      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      attribution: '&copy; <a href="https://www.esri.com/">Esri</a>'
+    },
+    terrain: {
+      url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+      attribution: '&copy; <a href="https://opentopomap.org">OpenTopoMap</a>'
+    }
+  }
     
   console.log('MapView - userPaths:', userPaths)
   console.log('MapView - locations:', locations)
 
   return (
-    <MapContainer 
-      center={center} 
-      zoom={14} 
-      className="map-container"
-    >
-      <MapUpdater currentLocation={currentLocation} locations={locations} currentUserId={currentUserId} />
-      <TileLayer
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-      />
+    <div>
+      <div style={{ marginBottom: '10px', display: 'flex', gap: '8px' }}>
+        <button
+          className={`map-type-btn ${mapType === 'street' ? 'active' : ''}`}
+          onClick={() => setMapType('street')}
+        >
+          🗺️ 일반
+        </button>
+        <button
+          className={`map-type-btn ${mapType === 'satellite' ? 'active' : ''}`}
+          onClick={() => setMapType('satellite')}
+        >
+          🛰️ 위성
+        </button>
+        <button
+          className={`map-type-btn ${mapType === 'terrain' ? 'active' : ''}`}
+          onClick={() => setMapType('terrain')}
+        >
+          ⛰️ 지형
+        </button>
+      </div>
+      <MapContainer 
+        center={center} 
+        zoom={14} 
+        className="map-container"
+      >
+        <MapUpdater currentLocation={currentLocation} locations={locations} currentUserId={currentUserId} />
+        <TileLayer
+          key={mapType}
+          url={mapTypes[mapType].url}
+          attribution={mapTypes[mapType].attribution}
+        />
       
       {/* 현재 사용자 위치 */}
       {currentLocation && (
@@ -123,7 +161,8 @@ function MapView({ locations, currentLocation, currentUserId, userPaths }) {
           )
         })
       })()}
-    </MapContainer>
+      </MapContainer>
+    </div>
   )
 }
 

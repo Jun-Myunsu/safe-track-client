@@ -584,3 +584,34 @@ p {
   box-shadow: 4px 4px 0px #000000;
   border-color: #aaaaaa;
 }
+
+.map-type-btn {
+  padding: 8px 16px;
+  border: 2px solid #555555;
+  background: #2a2a2a;
+  color: #999999;
+  cursor: pointer;
+  font-size: 1.1rem;
+  font-weight: 400;
+  transition: all 0.2s ease;
+  border-radius: 0;
+  font-family: "VT323", monospace;
+  text-transform: uppercase;
+  box-shadow: 2px 2px 0px #000000;
+  letter-spacing: 0.05em;
+}
+
+.map-type-btn:hover {
+  background: #3a3a3a;
+  border-color: #666666;
+  color: #cccccc;
+  box-shadow: 3px 3px 0px #000000;
+}
+
+.map-type-btn.active {
+  background: #4a4a4a;
+  border-color: #888888;
+  color: #ffffff;
+  box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.5), 2px 2px 0px #000000;
+  font-weight: bold;
+}
