@@ -21,7 +21,7 @@ function AuthForm({
             onChange={(e) => handleUserIdChange(e.target.value)}
           />
           {!isLoginMode && userId && (
-            <div style={{ fontSize: '12px', marginTop: '5px' }}>
+            <div style={{ fontSize: '1.1rem', marginTop: '5px', fontFamily: '"VT323", monospace' }}>
               {isCheckingUserId ? (
                 <span style={{ color: '#666' }}>중복 체크 중...</span>
               ) : userIdAvailable === true ? (
@@ -46,11 +46,11 @@ function AuthForm({
         </button>
       </div>
       
-      <p style={{ textAlign: 'center', marginTop: '10px' }}>
+      <p style={{ textAlign: 'center', marginTop: '10px', fontFamily: '"VT323", monospace' }}>
         {isLoginMode ? '계정이 없으신가요?' : '이미 계정이 있으신가요?'}
-        <button 
+        <button
           onClick={() => setIsLoginMode(!isLoginMode)}
-          style={{ background: 'none', border: 'none', color: '#ffffff', textDecoration: 'underline', cursor: 'pointer', marginLeft: '5px' }}
+          style={{ background: 'none', border: 'none', color: '#9370db', textDecoration: 'underline', cursor: 'pointer', marginLeft: '5px', fontFamily: '"VT323", monospace', fontSize: '1.2rem', fontWeight: 'bold' }}
         >
           {isLoginMode ? '회원가입' : '로그인'}
         </button>

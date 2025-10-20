@@ -380,7 +380,7 @@ function App() {
                     <div className="status success">
                       ✅ {userId}로 로그인 중
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', marginTop: '15px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', marginTop: '15px', fontFamily: '"VT323", monospace' }}>
                       <button
                         className="btn"
                         onClick={() => {

@@ -51,21 +51,23 @@ function UserSearch({ socket, userId, friends, setStatus }) {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+          className="input-group"
           style={{
             flex: 1,
             padding: '8px 12px',
-            border: '1px solid rgba(255, 255, 255, 0.15)',
-            borderRadius: '8px',
-            fontSize: '12px',
-            background: 'transparent',
-            color: '#ffffff'
+            border: '3px solid #9370db',
+            borderRadius: '0',
+            fontSize: '1.2rem',
+            background: '#fff5f5',
+            color: '#2d1b4e',
+            fontFamily: '"VT323", monospace'
           }}
         />
-        <button 
-          className="btn" 
+        <button
+          className="btn"
           onClick={handleSearch}
           disabled={isSearching || !searchQuery.trim()}
-          style={{ fontSize: '11px', padding: '8px 12px' }}
+          style={{ fontSize: '1.1rem', padding: '8px 12px' }}
         >
           {isSearching ? '검색중...' : '검색'}
         </button>
@@ -75,11 +77,11 @@ function UserSearch({ socket, userId, friends, setStatus }) {
         <div>
           {searchResults.map(user => (
             <div key={user.id} className="user-item" style={{ padding: '10px', margin: '0 0 6px 0' }}>
-              <span style={{ fontSize: '13px' }}>{user.id}</span>
-              <button 
+              <span style={{ fontSize: '1.2rem', fontFamily: '"VT323", monospace' }}>{user.id}</span>
+              <button
                 className="btn btn-secondary"
                 onClick={() => addFriend(user.id)}
-                style={{ fontSize: '10px', padding: '4px 8px' }}
+                style={{ fontSize: '1.1rem', padding: '4px 8px' }}
               >
                 추가
               </button>

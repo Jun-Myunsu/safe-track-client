@@ -38,7 +38,7 @@ function ChatSection({
       backgroundColor: '#1e1e1e',
       border: '3px solid #3d3d3d',
       overflow: 'hidden',
-      fontFamily: '"Courier New", monospace'
+      fontFamily: '"VT323", monospace'
     }}>
       <div
         ref={chatMessagesRef}
@@ -48,16 +48,16 @@ function ChatSection({
           padding: '15px',
           overflowY: 'auto',
           backgroundColor: '#252526',
-          fontFamily: '"Courier New", monospace',
-          fontSize: '14px',
+          fontFamily: '"VT323", monospace',
+          fontSize: '1.3rem',
           lineHeight: '1.6'
         }}
       >
         {chatMessages.length === 0 ? (
           <div style={{
             color: '#6a9955',
-            fontSize: '14px',
-            fontFamily: '"Courier New", monospace'
+            fontSize: '1.3rem',
+            fontFamily: '"VT323", monospace'
           }}>
             // 연결된 사용자와 채팅하세요
           </div>
@@ -65,7 +65,7 @@ function ChatSection({
           chatMessages.map((msg, index) => (
             <div key={index} style={{
               marginBottom: '8px',
-              fontFamily: '"Courier New", monospace',
+              fontFamily: '"VT323", monospace',
               display: 'flex',
               flexDirection: 'column',
               alignItems: msg.type === 'sent' ? 'flex-end' : 'flex-start'
@@ -73,8 +73,8 @@ function ChatSection({
               {msg.type === 'received' && (
                 <div style={{
                   color: '#4ec9b0',
-                  fontSize: '14px',
-                  fontFamily: '"Courier New", monospace',
+                  fontSize: '1.3rem',
+                  fontFamily: '"VT323", monospace',
                   textAlign: 'left'
                 }}>
                   {'>'} {getUserEmoji(msg.from)} {msg.from}:
@@ -83,8 +83,8 @@ function ChatSection({
               {msg.type === 'sent' && (
                 <div style={{
                   color: '#dcdcaa',
-                  fontSize: '14px',
-                  fontFamily: '"Courier New", monospace',
+                  fontSize: '1.3rem',
+                  fontFamily: '"VT323", monospace',
                   textAlign: 'right'
                 }}>
                   YOU 🎯: {'<'}
@@ -92,19 +92,19 @@ function ChatSection({
               )}
               <div style={{
                 color: msg.type === 'sent' ? '#dcdcaa' : '#ce9178',
-                fontSize: '14px',
+                fontSize: '1.3rem',
                 paddingLeft: msg.type === 'received' ? '20px' : '0',
                 paddingRight: msg.type === 'sent' ? '20px' : '0',
-                fontFamily: '"Courier New", monospace'
+                fontFamily: '"VT323", monospace'
               }}>
                 {msg.message}
               </div>
               <div style={{
                 color: '#6a9955',
-                fontSize: '12px',
+                fontSize: '1.1rem',
                 paddingLeft: msg.type === 'received' ? '20px' : '0',
                 paddingRight: msg.type === 'sent' ? '20px' : '0',
-                fontFamily: '"Courier New", monospace',
+                fontFamily: '"VT323", monospace',
                 opacity: 0.7,
                 textAlign: msg.type === 'sent' ? 'right' : 'left'
               }}>
@@ -130,8 +130,8 @@ function ChatSection({
         <div style={{
           padding: '10px 12px',
           color: '#569cd6',
-          fontSize: '14px',
-          fontFamily: '"Courier New", monospace',
+          fontSize: '1.3rem',
+          fontFamily: '"VT323", monospace',
           borderRight: '2px solid #3d3d3d'
         }}>
           {'> '}
@@ -147,11 +147,11 @@ function ChatSection({
             flex: 1,
             padding: '10px 12px',
             border: 'none',
-            fontSize: '14px',
+            fontSize: '1.3rem',
             outline: 'none',
             backgroundColor: '#1e1e1e',
             color: '#d4d4d4',
-            fontFamily: '"Courier New", monospace'
+            fontFamily: '"VT323", monospace'
           }}
         />
         <button
@@ -164,10 +164,10 @@ function ChatSection({
             border: '2px solid',
             borderColor: chatInput.trim() && isRegistered && getConnectedUsers().length > 0 ? '#00ff00' : '#3d3d3d',
             borderLeft: '2px solid #3d3d3d',
-            fontSize: '12px',
+            fontSize: '1.2rem',
             cursor: chatInput.trim() && isRegistered && getConnectedUsers().length > 0 ? 'pointer' : 'not-allowed',
             transition: 'all 0.2s',
-            fontFamily: '"Courier New", monospace',
+            fontFamily: '"VT323", monospace',
             fontWeight: 'bold',
             textTransform: 'uppercase'
           }}
