@@ -10,20 +10,20 @@ function LocationTracking({
   return (
     <>
       <div className="btn-group">
-        <button 
-          className="btn btn-white"
+        <button
+          className={`btn btn-tracking ${(isTracking && !isSimulating) ? 'active' : ''}`}
           onClick={(isTracking && !isSimulating) ? stopTracking : startTracking}
           disabled={!isRegistered || isSimulating}
         >
-          {(isTracking && !isSimulating) ? '추적 중지' : '위치 추적'}
+          {(isTracking && !isSimulating) ? '🔴 추적 중지' : '📍 위치 추적'}
         </button>
-        
-        <button 
-          className="btn btn-white"
+
+        <button
+          className={`btn btn-tracking ${isSimulating ? 'active' : ''}`}
           onClick={isSimulating ? stopTracking : startSimulation}
           disabled={!isRegistered || (isTracking && !isSimulating)}
         >
-          {isSimulating ? '시뮬레이션 중지' : '테스트'}
+          {isSimulating ? '🔴 시뮬레이션 중지' : '🧪 테스트'}
         </button>
       </div>
       
