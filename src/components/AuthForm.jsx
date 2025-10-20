@@ -50,7 +50,7 @@ function AuthForm({
         {isLoginMode ? '계정이 없으신가요?' : '이미 계정이 있으신가요?'}
         <button
           onClick={() => setIsLoginMode(!isLoginMode)}
-          style={{ background: 'none', border: 'none', color: '#9370db', textDecoration: 'underline', cursor: 'pointer', marginLeft: '5px', fontFamily: '"VT323", monospace', fontSize: '1.2rem', fontWeight: 'bold' }}
+          style={{ background: 'none', border: 'none', color: '#888888', textDecoration: 'underline', cursor: 'pointer', marginLeft: '5px', fontFamily: '"VT323", monospace', fontSize: '1.2rem', fontWeight: 'bold' }}
         >
           {isLoginMode ? '회원가입' : '로그인'}
         </button>

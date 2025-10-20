@@ -3,7 +3,7 @@ function SharedUsers({ sharedUsers, stopLocationShare }) {
 
   return (
     <div>
-      <h4 style={{ margin: '0 0 12px 0', fontSize: '1.2rem', color: '#2d1b4e', fontFamily: '"VT323", monospace' }}>위치 공유 중</h4>
+      <h4 style={{ margin: '0 0 12px 0', fontSize: '1.2rem', color: '#ffffff', fontFamily: '"VT323", monospace' }}>위치 공유 중</h4>
       {sharedUsers.map(user => (
         <div key={user.id} className="user-item sharing">
           <span style={{ fontFamily: '"VT323", monospace', fontSize: '1.2rem' }}><strong>{user.name}</strong> ({user.id})</span>

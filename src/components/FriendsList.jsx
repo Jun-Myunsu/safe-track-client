@@ -14,7 +14,7 @@ function FriendsList({ friends, onRequestShare, sharedUsers, receivedShares, soc
 
   return (
     <div>
-      <h4 style={{ margin: '16px 0 12px 0', fontSize: '1.2rem', color: '#2d1b4e', fontFamily: '"VT323", monospace' }}>
+      <h4 style={{ margin: '16px 0 12px 0', fontSize: '1.2rem', color: '#ffffff', fontFamily: '"VT323", monospace' }}>
         친구 목록
       </h4>
       {friends.map(friend => {

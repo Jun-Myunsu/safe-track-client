@@ -55,11 +55,11 @@ function UserSearch({ socket, userId, friends, setStatus }) {
           style={{
             flex: 1,
             padding: '8px 12px',
-            border: '3px solid #9370db',
+            border: '2px solid #555555',
             borderRadius: '0',
             fontSize: '1.2rem',
-            background: '#fff5f5',
-            color: '#2d1b4e',
+            background: '#1a1a1a',
+            color: '#e0e0e0',
             fontFamily: '"VT323", monospace'
           }}
         />
