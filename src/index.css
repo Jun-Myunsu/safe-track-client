@@ -415,6 +415,13 @@ body {
 .user-item.sharing {
   animation: gentle-pulse 3s ease-in-out infinite;
   border-color: #888888;
+  background: #353535;
+}
+
+.user-item.receiving {
+  animation: gentle-pulse 3s ease-in-out infinite;
+  border-color: #666666;
+  background: #2f2f2f;
 }
 
 @media (max-width: 1024px) {

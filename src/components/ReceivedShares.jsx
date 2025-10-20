@@ -5,7 +5,7 @@ function ReceivedShares({ receivedShares, stopReceivingShare }) {
     <div className="section">
       <h3>받은 위치 공유</h3>
       {receivedShares.map(user => (
-        <div key={user.id} className="user-item sharing">
+        <div key={user.id} className="user-item receiving">
           <span style={{ fontFamily: '"VT323", monospace', fontSize: '1.2rem' }}><strong>{user.name}</strong> ({user.id})의 위치 받는 중</span>
           <button
             className="btn btn-danger"
