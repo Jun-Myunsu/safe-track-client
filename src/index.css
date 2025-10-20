@@ -1,5 +1,5 @@
 @import "leaflet/dist/leaflet.css";
-@import url("https://fonts.googleapis.com/css2?family=VT323&family=Press+Start+2P&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=VT323&family=Press+Start+2P&family=Orbitron:wght@400;700;900&display=swap");
 
 * {
   box-sizing: border-box;
@@ -206,8 +206,11 @@ body {
   border-color: #2d1b4e;
   color: #2d1b4e;
   box-shadow: 5px 5px 0px #5fffa8, 0px 0px 20px rgba(0, 255, 136, 0.3);
-  font-weight: bold;
-  font-size: 1.4rem;
+  font-weight: 900;
+  font-size: 1.2rem;
+  font-family: "Orbitron", sans-serif;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 .btn-tracking::before {

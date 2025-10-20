@@ -15,7 +15,7 @@ function LocationTracking({
           onClick={(isTracking && !isSimulating) ? stopTracking : startTracking}
           disabled={!isRegistered || isSimulating}
         >
-          {(isTracking && !isSimulating) ? '🔴 추적 중지' : '📍 위치 추적'}
+          {(isTracking && !isSimulating) ? '🔴 STOP TRACK' : '📍 START TRACK'}
         </button>
 
         <button
@@ -23,7 +23,7 @@ function LocationTracking({
           onClick={isSimulating ? stopTracking : startSimulation}
           disabled={!isRegistered || (isTracking && !isSimulating)}
         >
-          {isSimulating ? '🔴 시뮬레이션 중지' : '🧪 테스트'}
+          {isSimulating ? '🔴 STOP TEST' : '🧪 TEST MODE'}
         </button>
       </div>
       
