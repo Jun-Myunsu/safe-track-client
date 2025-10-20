@@ -12,7 +12,7 @@ function SharedUsers({ sharedUsers, stopLocationShare }) {
             onClick={() => stopLocationShare(user.id)}
             style={{ fontSize: '1.1rem', padding: '6px 12px' }}
           >
-            중지
+            🛑 중지
           </button>
         </div>
       ))}

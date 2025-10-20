@@ -52,7 +52,7 @@ function FriendsList({ friends, onRequestShare, sharedUsers, receivedShares, soc
                 onClick={() => socket.emit('removeFriend', { friendId: friend.id })}
                 style={{ fontSize: '1.1rem', padding: '4px 8px' }}
               >
-                삭제
+                🛑 삭제
               </button>
             </div>
           </div>

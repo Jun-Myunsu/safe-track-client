@@ -235,15 +235,17 @@ body {
 }
 
 .btn-danger {
-  background: #e07b7b;
+  background: #ff3333;
   border-color: #2d1b4e;
   color: #ffffff;
-  box-shadow: 5px 5px 0px #f0b8b8;
+  box-shadow: 5px 5px 0px #ff6666;
+  font-weight: bold;
 }
 
 .btn-danger:hover {
-  background: #e89090;
-  box-shadow: 6px 6px 0px #f5cccc;
+  background: #ff4444;
+  box-shadow: 6px 6px 0px #ff8888;
+  transform: scale(1.02);
 }
 
 .btn:disabled {
