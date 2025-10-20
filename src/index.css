@@ -288,17 +288,17 @@ body {
 }
 
 .btn-danger {
-  background: #333333;
-  border-color: #888888;
+  background: #8b3a3a;
+  border-color: #666666;
   color: #ffffff;
   box-shadow: 3px 3px 0px #000000;
   font-weight: bold;
 }
 
 .btn-danger:hover {
-  background: #444444;
+  background: #a04545;
   box-shadow: 4px 4px 0px #000000;
-  border-color: #aaaaaa;
+  border-color: #888888;
   transform: scale(1.02);
 }
 
