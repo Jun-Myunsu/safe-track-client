@@ -70,26 +70,47 @@ function ChatSection({
               flexDirection: 'column',
               alignItems: msg.type === 'sent' ? 'flex-end' : 'flex-start'
             }}>
-              {msg.type === 'received' && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                width: '100%',
+                justifyContent: msg.type === 'sent' ? 'flex-end' : 'flex-start'
+              }}>
+                {msg.type === 'received' && (
+                  <div style={{
+                    color: '#4ec9b0',
+                    fontSize: '1.05rem',
+                    fontFamily: '"VT323", monospace',
+                    textAlign: 'left'
+                  }}>
+                    {'>'} {getUserEmoji(msg.from)} {msg.from}:
+                  </div>
+                )}
+                {msg.type === 'sent' && (
+                  <div style={{
+                    color: '#dcdcaa',
+                    fontSize: '1.05rem',
+                    fontFamily: '"VT323", monospace',
+                    textAlign: 'right'
+                  }}>
+                    YOU 🎯: {'<'}
+                  </div>
+                )}
                 <div style={{
-                  color: '#4ec9b0',
-                  fontSize: '1.05rem',
+                  color: '#6a9955',
+                  fontSize: '0.85rem',
                   fontFamily: '"VT323", monospace',
-                  textAlign: 'left'
+                  opacity: 0.6,
+                  whiteSpace: 'nowrap'
                 }}>
-                  {'>'} {getUserEmoji(msg.from)} {msg.from}:
+                  {new Date(msg.timestamp).toLocaleTimeString('ko-KR', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                  })}
                 </div>
-              )}
-              {msg.type === 'sent' && (
-                <div style={{
-                  color: '#dcdcaa',
-                  fontSize: '1.05rem',
-                  fontFamily: '"VT323", monospace',
-                  textAlign: 'right'
-                }}>
-                  YOU 🎯: {'<'}
-                </div>
-              )}
+              </div>
               <div style={{
                 color: msg.type === 'sent' ? '#dcdcaa' : '#ce9178',
                 fontSize: '1.05rem',
@@ -98,21 +119,6 @@ function ChatSection({
                 fontFamily: '"VT323", monospace'
               }}>
                 {msg.message}
-              </div>
-              <div style={{
-                color: '#6a9955',
-                fontSize: '0.95rem',
-                paddingLeft: msg.type === 'received' ? '15px' : '0',
-                paddingRight: msg.type === 'sent' ? '15px' : '0',
-                fontFamily: '"VT323", monospace',
-                opacity: 0.7,
-                textAlign: msg.type === 'sent' ? 'right' : 'left'
-              }}>
-                // {new Date(msg.timestamp).toLocaleTimeString('ko-KR', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  second: '2-digit'
-                })}
               </div>
             </div>
           ))
