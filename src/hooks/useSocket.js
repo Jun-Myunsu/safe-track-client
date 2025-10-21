@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import io from 'socket.io-client'
+import { speechService } from '../services/speechService'
 
 export function useSocket(handlers) {
   useEffect(() => {
@@ -68,7 +69,15 @@ export function useSocket(handlers) {
           })
         }
       },
-      locationShareRequest: (data) => handlers.setShareRequests(prev => [...prev, data]),
+      locationShareRequest: (data) => {
+        handlers.setShareRequests(prev => [...prev, data])
+        // 푸시 알림 표시
+        if (handlers.pushNotificationService) {
+          handlers.pushNotificationService.showLocationShareRequest(data.fromName)
+        }
+        // 음성 알림
+        speechService.notifyShareRequest(data.fromName)
+      },
       locationShareResponse: (data) => {
         // 대기 중인 요청에서 제거
         if (handlers.setPendingRequests) {
@@ -82,12 +91,20 @@ export function useSocket(handlers) {
         if (data.accepted) {
           handlers.setStatus(`✅ ${data.targetName}이 내 위치 공유를 수락했습니다`)
           handlers.setSharedUsers(prev => [...prev, { id: data.targetUserId, name: data.targetName }])
+          // 푸시 알림 표시
+          if (handlers.pushNotificationService) {
+            handlers.pushNotificationService.showLocationShareAccepted(data.targetName)
+          }
+          // 음성 알림
+          speechService.notifyShareAccepted(data.targetName)
           // 요청자의 위치 추적 시작
           if (handlers.startTracking && !handlers.isTracking && !handlers.isSimulating) {
             handlers.startTracking()
           }
         } else {
           handlers.setStatus(`❌ ${data.targetName}이 내 위치 공유를 거부했습니다`)
+          // 음성 알림
+          speechService.notifyShareRejected(data.targetName)
         }
         setTimeout(() => handlers.setStatus(''), 3000)
       },
@@ -97,6 +114,8 @@ export function useSocket(handlers) {
         handlers.setReceivedShares(prev => prev.filter(user => user.id !== data.fromUserId))
         handlers.setSharedUsers(prev => prev.filter(user => user.id !== data.fromUserId))
         handlers.setChatMessages([])
+        // 음성 알림
+        speechService.notifyLocationShareStopped(data.fromName)
       },
       locationRemoved: (data) => {
         handlers.setLocations(prev => prev.filter(loc => loc.userId !== data.userId))
@@ -126,7 +145,15 @@ export function useSocket(handlers) {
           handlers.setPendingRequests(prev => new Set([...prev, data.targetUserId]))
         }
       },
-      messageReceived: (data) => handlers.setChatMessages(prev => [...prev, { ...data, type: 'received' }]),
+      messageReceived: (data) => {
+        handlers.setChatMessages(prev => [...prev, { ...data, type: 'received' }])
+        // 푸시 알림 표시
+        if (handlers.pushNotificationService) {
+          handlers.pushNotificationService.showNewMessage(data.fromName, data.message)
+        }
+        // 음성 알림
+        speechService.notifyNewMessage(data.fromName)
+      },
       messageSent: (data) => handlers.setChatMessages(prev => [...prev, { ...data, type: 'sent' }]),
       chatError: (data) => {
         handlers.setStatus(`❌ ${data.message}`)
@@ -205,6 +232,12 @@ export function useSocket(handlers) {
           localStorage.setItem('safetrack_friends', JSON.stringify(updated))
           return updated
         })
+        // 푸시 알림 표시
+        if (handlers.pushNotificationService) {
+          handlers.pushNotificationService.showFriendAdded(data.friendId)
+        }
+        // 음성 알림
+        speechService.notifyFriendRequestAccepted(data.friendId)
       },
       friendsList: (data) => {
         handlers.setFriends(data.friends)

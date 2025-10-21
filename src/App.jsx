@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import MapView from './MapView'
 import AuthForm from './components/AuthForm'
 import LocationTracking from './components/LocationTracking'
@@ -10,8 +10,11 @@ import ReceivedShares from './components/ReceivedShares'
 import UserList from './components/UserList'
 import UserSearch from './components/UserSearch'
 import FriendsList from './components/FriendsList'
+import VoiceSettings from './components/VoiceSettings'
 import { useSocket } from './hooks/useSocket'
 import { saveAppState, clearAppState } from './utils/localStorage'
+import { pushNotificationService } from './services/pushNotification'
+import { speechService } from './services/speechService'
 
 function App() {
   const [socket, setSocket] = useState(null)
@@ -161,6 +164,8 @@ function App() {
 
     setIsTracking(true)
     saveAppState.isTracking('true')
+    // 음성 알림
+    speechService.notifyTrackingStarted()
   }
 
   const stopTracking = () => {
@@ -178,9 +183,13 @@ function App() {
     setIsTracking(false)
     setIsSimulating(false)
     setCurrentLocation(null)
+    // 위치 히스토리 초기화
+    setLocations(prev => prev.filter(loc => loc.userId !== userId))
     saveAppState.isTracking('false')
     saveAppState.isSimulating('false')
     localStorage.removeItem('safetrack_currentLocation')
+    // 음성 알림
+    speechService.notifyTrackingStopped()
   }
 
   const requestLocationShare = () => {
@@ -220,6 +229,7 @@ function App() {
   const stopReceivingShare = (fromUserId) => {
     socket.emit('stopReceivingShare', { fromUserId })
     socket.emit('stopLocationShare', { targetUserId: fromUserId })
+    socket.emit('removeUserLocation', { userId: fromUserId })
     setReceivedShares(prev => prev.filter(user => user.id !== fromUserId))
     setLocations(prev => prev.filter(loc => loc.userId !== fromUserId))
     setSharedUsers(prev => prev.filter(user => user.id !== fromUserId))
@@ -262,6 +272,8 @@ function App() {
     setIsSimulating(true)
     saveAppState.isTracking('true')
     saveAppState.isSimulating('true')
+    // 음성 알림
+    speechService.notifyTrackingStarted()
     
     // 초기 위치 전송
     socket.emit('locationUpdate', { userId, lat: currentLat, lng: currentLng })
@@ -336,12 +348,19 @@ function App() {
     return Array.from(connected)
   }
 
+  // 푸시 알림 권한 요청 (앱 시작 시)
+  useEffect(() => {
+    if (isRegistered) {
+      pushNotificationService.requestPermission()
+    }
+  }, [isRegistered])
+
   useSocket({
     setSocket, isRegistered, userId, setUserId, setUsers, setLocations, setUserPaths,
     setShareRequests, setStatus, setSharedUsers, setReceivedShares,
     setChatMessages, setIsRegistered, password, setUserIdAvailable, setIsCheckingUserId,
     startTracking, isTracking, isSimulating, friends, setFriends, setIsConnecting,
-    pendingRequests, setPendingRequests
+    pendingRequests, setPendingRequests, pushNotificationService
   })
 
   return (
@@ -453,10 +472,12 @@ function App() {
             respondToRequest={respondToRequest}
           />
 
-          <ReceivedShares 
+          <ReceivedShares
             receivedShares={receivedShares}
             stopReceivingShare={stopReceivingShare}
           />
+
+          {isRegistered && <VoiceSettings />}
 
           {isRegistered && (
             <div className="section users-toggle-section">
@@ -510,6 +531,8 @@ function App() {
             currentLocation={currentLocation}
             currentUserId={userId}
             userPaths={userPaths}
+            isTracking={isTracking || isSimulating}
+            myLocationHistory={locations.filter(loc => loc.userId === userId)}
           />
           
           <ChatSection 
