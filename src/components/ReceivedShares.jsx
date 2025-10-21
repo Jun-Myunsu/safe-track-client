@@ -12,7 +12,7 @@ function ReceivedShares({ receivedShares, stopReceivingShare }) {
             onClick={() => stopReceivingShare(user.id)}
             style={{ fontSize: '1.1rem', padding: '10px 20px', minWidth: '100px' }}
           >
-            🛑 수신 중지
+            🛑 중지
           </button>
         </div>
       ))}
