@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import io from 'socket.io-client'
 import { speechService } from '../services/speechService'
+import { audioService } from '../services/audioService'
 
 export function useSocket(handlers) {
   useEffect(() => {
@@ -151,8 +152,8 @@ export function useSocket(handlers) {
         if (handlers.pushNotificationService) {
           handlers.pushNotificationService.showNewMessage(data.fromName, data.message)
         }
-        // 음성 알림
-        speechService.notifyNewMessage(data.fromName)
+        // 작은 알림음 재생 (음성 대신)
+        audioService.playMessageNotification()
       },
       messageSent: (data) => handlers.setChatMessages(prev => [...prev, { ...data, type: 'sent' }]),
       chatError: (data) => {
