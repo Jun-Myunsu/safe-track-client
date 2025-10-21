@@ -58,6 +58,13 @@ body::before {
   min-height: 100vh;
 }
 
+@media (max-width: 768px) {
+  .container {
+    padding: 10px;
+    gap: 15px;
+  }
+}
+
 .content-grid {
   display: grid;
   grid-template-columns: 350px 1fr;
@@ -84,6 +91,12 @@ body::before {
   }
 }
 
+@media (max-width: 768px) {
+  .content-grid {
+    gap: 15px;
+  }
+}
+
 .section {
   background: #2a2a2a;
   margin: 0 0 15px 0;
@@ -106,6 +119,13 @@ body::before {
   }
 }
 
+@media (max-width: 768px) {
+  .section {
+    padding: 15px;
+    margin: 0 0 10px 0;
+  }
+}
+
 .section h3 {
   margin-top: 0;
   margin-bottom: 16px;
@@ -120,6 +140,13 @@ body::before {
   .section h3 {
     font-size: 1rem;
     margin-bottom: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .section h3 {
+    font-size: 0.9rem;
+    margin-bottom: 10px;
   }
 }
 
@@ -146,6 +173,13 @@ body::before {
   color: #e0e0e0;
   transition: all 0.2s ease;
   font-family: '아리따 돋움', 'Arita-dotum-Medium', sans-serif;
+}
+
+@media (max-width: 768px) {
+  .input-group input {
+    padding: 10px 12px;
+    font-size: 1rem;
+  }
 }
 
 .input-group input:focus {
@@ -208,6 +242,14 @@ body::before {
     width: 100%;
     padding: 12px 16px;
     font-size: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .btn {
+    padding: 10px 12px;
+    font-size: 11px;
+    min-width: 60px;
   }
 }
 
@@ -398,6 +440,14 @@ body::before {
   z-index: 1;
 }
 
+@media (max-width: 768px) {
+  .status {
+    padding: 10px 15px;
+    margin: 12px 0;
+    font-size: 1rem;
+  }
+}
+
 .status.success {
   background: #3a3a3a;
   border-color: #888888;
@@ -468,6 +518,18 @@ body::before {
   }
 }
 
+@media (max-width: 768px) {
+  .user-item {
+    padding: 6px;
+    gap: 8px;
+    font-size: 0.8rem;
+  }
+
+  .user-item > div {
+    gap: 6px;
+  }
+}
+
 .location-item {
   padding: 25px 0;
   margin: 0;
@@ -491,6 +553,13 @@ body::before {
   border-left: 3px solid #888888;
 }
 
+@media (max-width: 768px) {
+  .location-coords {
+    font-size: 1rem;
+    padding: 8px;
+  }
+}
+
 .location-time {
   font-size: 1rem;
   color: #999999;
@@ -510,6 +579,12 @@ body::before {
 @media (max-width: 1024px) {
   .map-container {
     height: 400px;
+  }
+}
+
+@media (max-width: 768px) {
+  .map-container {
+    height: 300px;
   }
 }
 
@@ -563,6 +638,17 @@ body::before {
     font-size: 11px;
     padding: 10px 8px;
     min-width: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .btn-group {
+    gap: 6px;
+  }
+
+  .btn-group .btn {
+    font-size: 10px;
+    padding: 8px 6px;
   }
 }
 
