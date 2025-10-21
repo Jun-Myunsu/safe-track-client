@@ -50,7 +50,12 @@ function FriendsList({ friends, onRequestShare, sharedUsers, receivedShares, soc
               <button
                 className="btn btn-remove"
                 onClick={() => socket.emit('removeFriend', { friendId: friend.id })}
-                style={{ fontSize: '1.1rem', padding: '4px 8px' }}
+                disabled={alreadySharing}
+                style={{ 
+                  fontSize: '1.1rem', 
+                  padding: '4px 8px',
+                  opacity: alreadySharing ? 0.5 : 1
+                }}
               >
                 삭제
               </button>

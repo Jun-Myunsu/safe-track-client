@@ -10,7 +10,6 @@ import ReceivedShares from './components/ReceivedShares'
 import UserList from './components/UserList'
 import UserSearch from './components/UserSearch'
 import FriendsList from './components/FriendsList'
-import VoiceSettings from './components/VoiceSettings'
 import { useSocket } from './hooks/useSocket'
 import { saveAppState, clearAppState } from './utils/localStorage'
 import { pushNotificationService } from './services/pushNotification'
@@ -18,6 +17,9 @@ import { speechService } from './services/speechService'
 
 function App() {
   const [socket, setSocket] = useState(null)
+  const [voiceEnabled, setVoiceEnabled] = useState(speechService.isEnabled())
+  const [selectedVoice, setSelectedVoice] = useState('')
+  const [availableVoices, setAvailableVoices] = useState([])
   const [isRegistered, setIsRegistered] = useState(() => {
     const saved = localStorage.getItem('safetrack_isRegistered')
     return saved === 'true'
@@ -355,6 +357,41 @@ function App() {
     }
   }, [isRegistered])
 
+  // 음성 목록 로드
+  useEffect(() => {
+    const loadVoices = () => {
+      const voices = speechService.getAvailableVoices()
+      setAvailableVoices(voices)
+
+      if (speechService.selectedVoice) {
+        setSelectedVoice(speechService.selectedVoice.name)
+      } else if (voices.length > 0) {
+        const koreanVoice = voices.find(v => v.lang.startsWith('ko'))
+        setSelectedVoice(koreanVoice?.name || voices[0]?.name || '')
+      }
+    }
+
+    loadVoices()
+    const timeout = setTimeout(loadVoices, 500)
+    return () => clearTimeout(timeout)
+  }, [])
+
+  const handleVoiceToggle = () => {
+    const newEnabled = !voiceEnabled
+    setVoiceEnabled(newEnabled)
+    speechService.setEnabled(newEnabled)
+    if (newEnabled) {
+      speechService.speak('음성 알림이 활성화되었습니다')
+    }
+  }
+
+  const handleVoiceChange = (e) => {
+    const voiceName = e.target.value
+    setSelectedVoice(voiceName)
+    speechService.setVoice(voiceName)
+    speechService.speak('음성이 변경되었습니다')
+  }
+
   useSocket({
     setSocket, isRegistered, userId, setUserId, setUsers, setLocations, setUserPaths,
     setShareRequests, setStatus, setSharedUsers, setReceivedShares,
@@ -399,6 +436,58 @@ function App() {
                     <div className="status success">
                       ✅ {userId}로 로그인 중
                     </div>
+
+                    {/* 음성 알림 설정 */}
+                    {speechService.isSupported() && (
+                      <div style={{ marginTop: '16px', marginBottom: '16px' }}>
+                        <label style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px',
+                          cursor: 'pointer',
+                          fontSize: '1.1rem',
+                          fontFamily: '"VT323", monospace',
+                          marginBottom: '12px'
+                        }}>
+                          <input
+                            type="checkbox"
+                            checked={voiceEnabled}
+                            onChange={handleVoiceToggle}
+                            style={{
+                              width: '18px',
+                              height: '18px',
+                              cursor: 'pointer'
+                            }}
+                          />
+                          <span>🔊 음성 알림</span>
+                        </label>
+
+                        {voiceEnabled && availableVoices.length > 0 && (
+                          <select
+                            value={selectedVoice}
+                            onChange={handleVoiceChange}
+                            style={{
+                              width: '100%',
+                              padding: '10px',
+                              border: '2px solid #555555',
+                              background: '#1a1a1a',
+                              color: '#e0e0e0',
+                              fontSize: '1rem',
+                              fontFamily: '"VT323", monospace',
+                              borderRadius: '0',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            {availableVoices.map(voice => (
+                              <option key={voice.name} value={voice.name}>
+                                {voice.name} ({voice.lang})
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      </div>
+                    )}
+
                     <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', marginTop: '15px', fontFamily: '"VT323", monospace' }}>
                       <button
                         className="btn"
@@ -476,8 +565,6 @@ function App() {
             receivedShares={receivedShares}
             stopReceivingShare={stopReceivingShare}
           />
-
-          {isRegistered && <VoiceSettings />}
 
           {isRegistered && (
             <div className="section users-toggle-section">
