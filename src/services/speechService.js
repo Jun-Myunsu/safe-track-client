@@ -51,7 +51,9 @@ class SpeechService {
     utterance.rate = options.rate || 1.0 // 속도
     utterance.pitch = options.pitch || 1.0 // 음높이
     utterance.volume = options.volume || 1.0 // 볼륨
-    utterance.lang = options.lang || 'ko-KR' // 언어
+    
+    // 선택된 음성의 언어를 사용, 없으면 옵션에서 지정한 언어 또는 기본값 사용
+    utterance.lang = options.lang || (this.selectedVoice ? this.selectedVoice.lang : 'ko-KR')
 
     // 음성 재생
     speechSynthesis.speak(utterance)
