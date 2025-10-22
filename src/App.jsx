@@ -84,7 +84,7 @@ function App() {
 
   const handleUserIdChange = (value) => {
     setUserId(value)
-    if (!isLoginMode && value.length > 0) {
+    if (!isLoginMode && value.length >= 4) {
       clearTimeout(window.userIdCheckTimeout)
       window.userIdCheckTimeout = setTimeout(() => checkUserId(value), 500)
     } else {
