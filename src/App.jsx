@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import MapView from './MapView'
 import AuthForm from './components/AuthForm'
 import LocationTracking from './components/LocationTracking'
@@ -10,6 +10,8 @@ import ReceivedShares from './components/ReceivedShares'
 import UserList from './components/UserList'
 import UserSearch from './components/UserSearch'
 import FriendsList from './components/FriendsList'
+import RadioPlayer from './components/RadioPlayer'
+import FakeCall from './components/FakeCall'
 import { useSocket } from './hooks/useSocket'
 import { saveAppState, clearAppState } from './utils/localStorage'
 import { pushNotificationService } from './services/pushNotification'
@@ -90,7 +92,7 @@ function App() {
     }
     
     // 저장된 사용자 정보 자동 입력
-    if (isLoginMode) {
+    if (isLoginMode && value) {
       const savedUsers = JSON.parse(localStorage.getItem('safetrack_users') || '[]')
       const savedUser = savedUsers.find(user => user.userId === value)
       if (savedUser) {
@@ -102,6 +104,18 @@ function App() {
   const handleAuth = () => {
     if (!userId || !password) {
       setStatus('❌ 아이디와 비밀번호를 입력하세요')
+      setTimeout(() => setStatus(''), 3000)
+      return
+    }
+
+    if (userId.length < 4) {
+      setStatus('❌ 아이디는 4자리 이상 입력하세요')
+      setTimeout(() => setStatus(''), 3000)
+      return
+    }
+
+    if (password.length < 4) {
+      setStatus('❌ 비밀번호는 4자리 이상 입력하세요')
       setTimeout(() => setStatus(''), 3000)
       return
     }
@@ -312,7 +326,19 @@ function App() {
     }, updateInterval) // 2초마다 업데이트
   }
 
-  const sendMessage = () => {
+  const getConnectedUsers = useCallback(() => {
+    const connected = new Set()
+    sharedUsers.forEach(user => connected.add(user.id))
+    receivedShares.forEach(user => connected.add(user.id))
+    locations.forEach(location => {
+      if (location.userId !== userId) {
+        connected.add(location.userId)
+      }
+    })
+    return Array.from(connected)
+  }, [sharedUsers, receivedShares, locations, userId])
+
+  const sendMessage = useCallback(() => {
     if (!chatInput.trim()) return
     
     const connectedUsers = getConnectedUsers()
@@ -331,24 +357,7 @@ function App() {
     })
     
     setChatInput('')
-  }
-
-
-
-  const getConnectedUsers = () => {
-    const connected = new Set()
-    // 내가 공유하는 사용자들
-    sharedUsers.forEach(user => connected.add(user.id))
-    // 내가 수락한 위치 공유 사용자들
-    receivedShares.forEach(user => connected.add(user.id))
-    // 내 위치를 보고 있는 사용자들
-    locations.forEach(location => {
-      if (location.userId !== userId) {
-        connected.add(location.userId)
-      }
-    })
-    return Array.from(connected)
-  }
+  }, [chatInput, getConnectedUsers, socket, setStatus])
 
   // 푸시 알림 권한 요청 (앱 시작 시)
   useEffect(() => {
@@ -432,7 +441,13 @@ function App() {
                   </button>
                 ) : (
                   <>
-                    <h3>로그인 상태</h3>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                      <h3 style={{ margin: 0 }}>로그인 상태</h3>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <RadioPlayer />
+                        <FakeCall />
+                      </div>
+                    </div>
                     <div className="status success">
                       ✅ {userId}로 로그인 중
                     </div>
@@ -492,22 +507,20 @@ function App() {
                       <button
                         className="btn"
                         onClick={() => {
-                          // 서버에 로그아웃 알림
                           if (socket) {
                             socket.emit('logout', { userId })
                           }
 
-                          localStorage.removeItem('safetrack_sessionId')
-                          localStorage.removeItem('safetrack_userId')
-                          localStorage.removeItem('safetrack_isRegistered')
-                          localStorage.removeItem('safetrack_isTracking')
-                          localStorage.removeItem('safetrack_isSimulating')
-                          localStorage.removeItem('safetrack_currentLocation')
-                          localStorage.removeItem('safetrack_sharedUsers')
-                          localStorage.removeItem('safetrack_receivedShares')
-                          localStorage.removeItem('safetrack_chatMessages')
-                          localStorage.removeItem('safetrack_friends')
+                          // 로컬 스토리지 정리
+                          const keysToRemove = [
+                            'safetrack_sessionId', 'safetrack_userId', 'safetrack_isRegistered',
+                            'safetrack_isTracking', 'safetrack_isSimulating', 'safetrack_currentLocation',
+                            'safetrack_sharedUsers', 'safetrack_receivedShares', 'safetrack_chatMessages',
+                            'safetrack_friends'
+                          ]
+                          keysToRemove.forEach(key => localStorage.removeItem(key))
 
+                          // 상태 초기화
                           setIsRegistered(false)
                           setStatus('')
                           setUserId('')

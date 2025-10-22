@@ -19,8 +19,7 @@ function ChatSection({
   // 사용자에게 이모지 할당
   const getUserEmoji = (username) => {
     if (!userEmojis.current[username]) {
-      const randomEmoji = emojiList[Math.floor(Math.random() * emojiList.length)]
-      userEmojis.current[username] = randomEmoji
+      userEmojis.current[username] = emojiList[Math.floor(Math.random() * emojiList.length)]
     }
     return userEmojis.current[username]
   }
@@ -30,6 +29,8 @@ function ChatSection({
       chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight
     }
   }, [chatMessages])
+
+
 
   return (
     <div className="chat-section" style={{
