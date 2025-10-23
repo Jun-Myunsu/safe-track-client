@@ -30,8 +30,6 @@ function ChatSection({
     }
   }, [chatMessages])
 
-
-
   return (
     <div className="chat-section" style={{
       marginTop: '15px',

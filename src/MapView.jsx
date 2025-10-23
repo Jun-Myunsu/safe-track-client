@@ -1,5 +1,5 @@
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useCallback } from 'react'
 import L from 'leaflet'
 import Compass from './components/Compass'
 
@@ -9,6 +9,34 @@ L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
   iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+})
+
+// 마커 아이콘 생성 함수
+const createUserMarkerIcon = () => L.divIcon({
+  html: `
+    <div style="position: relative; width: 24px; height: 24px;">
+      <div style="background: linear-gradient(135deg, #ff6b6b, #ff3838); width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 3px 8px rgba(255, 59, 56, 0.4), 0 0 0 1px rgba(255, 59, 56, 0.2); display: flex; align-items: center; justify-content: center; position: relative; animation: pulse 2s infinite;">
+        <span style="color: white; font-weight: bold; font-size: 10px; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">📍</span>
+      </div>
+      <div style="position: absolute; top: -1px; right: -1px; background: #00ff88; width: 8px; height: 8px; border-radius: 50%; border: 1px solid white; box-shadow: 0 1px 2px rgba(0,0,0,0.2);"></div>
+    </div>
+    <style>@keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }</style>
+  `,
+  className: 'current-user-marker',
+  iconSize: [24, 24],
+  iconAnchor: [12, 12]
+})
+
+const createOtherUserMarkerIcon = () => L.divIcon({
+  html: `
+    <div style="background: linear-gradient(135deg, #ff5722, #d32f2f); width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 6px rgba(255, 193, 7, 0.4), 0 0 0 1px rgba(255, 235, 59, 0.3); display: flex; align-items: center; justify-content: center; animation: blink 1.5s ease-in-out infinite;">
+      <span style="font-size: 12px;">🚶</span>
+    </div>
+    <style>@keyframes blink { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.7; transform: scale(1.1); } }</style>
+  `,
+  className: 'current-location-marker',
+  iconSize: [20, 20],
+  iconAnchor: [10, 10]
 })
 
 // 지도 중심 업데이트 컴포넌트
@@ -58,59 +86,59 @@ function MapView({ locations, currentLocation, currentUserId, isTracking, myLoca
   const [emergencyLocations, setEmergencyLocations] = useState({ hospitals: [], police: [], stations: [] })
   
   // 실제 응급시설 API 호출
-  useEffect(() => {
+  const fetchEmergencyFacilities = useCallback(async () => {
     if (!mapBounds || !showEmergency) return
     
-    const fetchEmergencyFacilities = async () => {
-      try {
-        const bounds = mapBounds
-        const south = bounds.getSouth()
-        const west = bounds.getWest()
-        const north = bounds.getNorth()
-        const east = bounds.getEast()
+    try {
+      const bounds = mapBounds
+      const south = bounds.getSouth()
+      const west = bounds.getWest()
+      const north = bounds.getNorth()
+      const east = bounds.getEast()
+      
+      const query = `[out:json][timeout:25];(node["amenity"="hospital"](${south},${west},${north},${east});node["amenity"="police"](${south},${west},${north},${east});node["amenity"="fire_station"](${south},${west},${north},${east}););out geom;`
+      
+      const response = await fetch('https://overpass-api.de/api/interpreter', {
+        method: 'POST',
+        body: query
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        const hospitals = []
+        const police = []
+        const stations = []
         
-        const query = `[out:json][timeout:25];(node["amenity"="hospital"](${south},${west},${north},${east});node["amenity"="police"](${south},${west},${north},${east});node["amenity"="fire_station"](${south},${west},${north},${east}););out geom;`
-        
-        const response = await fetch('https://overpass-api.de/api/interpreter', {
-          method: 'POST',
-          body: query
+        data.elements.forEach(element => {
+          if (element.tags) {
+            const facility = {
+              name: element.tags.name || '이름 없음',
+              lat: element.lat,
+              lng: element.lon
+            }
+            
+            if (element.tags.amenity === 'hospital') {
+              hospitals.push(facility)
+            } else if (element.tags.amenity === 'police') {
+              police.push(facility)
+            } else if (element.tags.amenity === 'fire_station') {
+              stations.push(facility)
+            }
+          }
         })
         
-        if (response.ok) {
-          const data = await response.json()
-          const hospitals = []
-          const police = []
-          const stations = []
-          
-          data.elements.forEach(element => {
-            if (element.tags) {
-              const facility = {
-                name: element.tags.name || '이름 없음',
-                lat: element.lat,
-                lng: element.lon
-              }
-              
-              if (element.tags.amenity === 'hospital') {
-                hospitals.push(facility)
-              } else if (element.tags.amenity === 'police') {
-                police.push(facility)
-              } else if (element.tags.amenity === 'fire_station') {
-                stations.push(facility)
-              }
-            }
-          })
-          
-          setEmergencyLocations({ hospitals, police, stations })
-        }
-      } catch (error) {
-        console.error('응급시설 데이터 로드 실패:', error)
+        setEmergencyLocations({ hospitals, police, stations })
       }
+    } catch (error) {
+      console.error('응급시설 데이터 로드 실패:', error)
     }
-    
-    fetchEmergencyFacilities()
   }, [mapBounds, showEmergency])
   
-  const mapTypes = {
+  useEffect(() => {
+    fetchEmergencyFacilities()
+  }, [fetchEmergencyFacilities])
+  
+  const mapTypes = useMemo(() => ({
     street: {
       url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -127,7 +155,7 @@ function MapView({ locations, currentLocation, currentUserId, isTracking, myLoca
       url: 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tiles style by <a href="https://www.hotosm.org/" target="_blank">Humanitarian OpenStreetMap Team</a>'
     }
-  }
+  }), [])
 
   return (
     <div style={{ position: 'relative' }}>
@@ -212,48 +240,7 @@ function MapView({ locations, currentLocation, currentUserId, isTracking, myLoca
         {currentLocation && (
           <Marker 
             position={[currentLocation.lat, currentLocation.lng]}
-            icon={L.divIcon({
-              html: `
-                <div style="position: relative; width: 24px; height: 24px;">
-                  <div style="
-                    background: linear-gradient(135deg, #ff6b6b, #ff3838);
-                    width: 20px;
-                    height: 20px;
-                    border-radius: 50%;
-                    border: 2px solid white;
-                    box-shadow: 0 3px 8px rgba(255, 59, 56, 0.4), 0 0 0 1px rgba(255, 59, 56, 0.2);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    position: relative;
-                    animation: pulse 2s infinite;
-                  ">
-                    <span style="color: white; font-weight: bold; font-size: 10px; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">📍</span>
-                  </div>
-                  <div style="
-                    position: absolute;
-                    top: -1px;
-                    right: -1px;
-                    background: #00ff88;
-                    width: 8px;
-                    height: 8px;
-                    border-radius: 50%;
-                    border: 1px solid white;
-                    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
-                  "></div>
-                </div>
-                <style>
-                  @keyframes pulse {
-                    0% { transform: scale(1); }
-                    50% { transform: scale(1.1); }
-                    100% { transform: scale(1); }
-                  }
-                </style>
-              `,
-              className: 'current-user-marker',
-              iconSize: [24, 24],
-              iconAnchor: [12, 12]
-            })}
+            icon={createUserMarkerIcon()}
           >
             <Popup>
               <strong>내 위치 ({currentUserId})</strong><br/>
@@ -277,33 +264,7 @@ function MapView({ locations, currentLocation, currentUserId, isTracking, myLoca
             <Marker 
               key={`current-${location.userId}`}
               position={[location.lat, location.lng]}
-              icon={L.divIcon({
-                html: `
-                  <div style="
-                    background: linear-gradient(135deg, #ff5722, #d32f2f);
-                    width: 20px;
-                    height: 20px;
-                    border-radius: 50%;
-                    border: 2px solid white;
-                    box-shadow: 0 2px 6px rgba(255, 193, 7, 0.4), 0 0 0 1px rgba(255, 235, 59, 0.3);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    animation: blink 1.5s ease-in-out infinite;
-                  ">
-                    <span style="font-size: 12px;">🚶</span>
-                  </div>
-                  <style>
-                    @keyframes blink {
-                      0%, 100% { opacity: 1; transform: scale(1); }
-                      50% { opacity: 0.7; transform: scale(1.1); }
-                    }
-                  </style>
-                `,
-                className: 'current-location-marker',
-                iconSize: [20, 20],
-                iconAnchor: [10, 10]
-              })}
+              icon={createOtherUserMarkerIcon()}
               zIndexOffset={1000}
             >
               <Popup>
@@ -321,7 +282,7 @@ function MapView({ locations, currentLocation, currentUserId, isTracking, myLoca
           <>
             {emergencyLocations.hospitals.map((hospital, index) => (
               <Marker
-                key={`hospital-${index}`}
+                key={`hospital-${hospital.lat}-${hospital.lng}`}
                 position={[hospital.lat, hospital.lng]}
                 icon={L.divIcon({
                   html: `<div style="background-color: #ff4444; width: 16px; height: 16px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-size: 8px;">🏥</div>`,
@@ -342,7 +303,7 @@ function MapView({ locations, currentLocation, currentUserId, isTracking, myLoca
             
             {emergencyLocations.police.map((station, index) => (
               <Marker
-                key={`police-${index}`}
+                key={`police-${station.lat}-${station.lng}`}
                 position={[station.lat, station.lng]}
                 icon={L.divIcon({
                   html: `<div style="background-color: #4444ff; width: 16px; height: 16px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-size: 8px;">🚔</div>`,
@@ -363,7 +324,7 @@ function MapView({ locations, currentLocation, currentUserId, isTracking, myLoca
             
             {emergencyLocations.stations.map((station, index) => (
               <Marker
-                key={`station-${index}`}
+                key={`station-${station.lat}-${station.lng}`}
                 position={[station.lat, station.lng]}
                 icon={L.divIcon({
                   html: `<div style="background-color: #00aa44; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-size: 7px;">🛡️</div>`,

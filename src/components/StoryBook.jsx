@@ -6,11 +6,13 @@ function StoryBook() {
   const [isLoading, setIsLoading] = useState(false)
 
   const handleShowStory = async () => {
-    setIsLoading(true)
     setShowStory(true)
+    setIsLoading(true)
+    setCurrentStory(null)
     
     try {
-      const response = await fetch(import.meta.env.VITE_SERVER_URL + '/api/emergency-tip', {
+      const serverUrl = import.meta.env.VITE_SERVER_URL || 'https://safe-track-server.onrender.com'
+      const response = await fetch(`${serverUrl}/api/emergency-tip`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -54,18 +56,21 @@ function StoryBook() {
         📖
       </button>
 
-      {showStory && currentStory && (
+      {showStory && (
         <div className="modal-overlay" onClick={handleClose}>
           <div className="modal-content story-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>{currentStory.title}</h3>
+              <h3>{isLoading ? '로딩 중...' : currentStory?.title || '응급 상식'}</h3>
               <button className="modal-close" onClick={handleClose}>✕</button>
             </div>
             <div className="modal-body">
               {isLoading ? (
-                <p style={{ textAlign: 'center', opacity: 0.7 }}>응급 상식을 불러오는 중...</p>
+                <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+                  <div className="spinner"></div>
+                  <p style={{ marginTop: '20px', opacity: 0.7 }}>응급 상식을 불러오는 중...</p>
+                </div>
               ) : (
-                <p>{currentStory.content}</p>
+                <p>{currentStory?.content}</p>
               )}
             </div>
             <div className="modal-footer">
