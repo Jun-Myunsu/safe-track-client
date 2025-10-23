@@ -1,0 +1,16 @@
+      restoreState: (data) => {
+        // 공유 상태 복원
+        if (data.sharedUsers && data.sharedUsers.length > 0) {
+          handlers.setSharedUsers(data.sharedUsers)
+          localStorage.setItem('safetrack_sharedUsers', JSON.stringify(data.sharedUsers))
+        }
+        if (data.receivedShares && data.receivedShares.length > 0) {
+          handlers.setReceivedShares(data.receivedShares)
+          localStorage.setItem('safetrack_receivedShares', JSON.stringify(data.receivedShares))
+        }
+        // 추적 상태 복원 (필요 시)
+        if (data.isTracking && handlers.startTracking) {
+          // startTracking은 사용자가 직접 시작하도록 함
+        }
+        console.log('공유 상태 복원됨:', data)
+      },
