@@ -88,22 +88,10 @@ function FakeCall() {
     <button
       onClick={playFakeCall}
       disabled={isPlaying}
+      className="icon-btn sos-btn"
       style={{
-        width: '32px',
-        height: '32px',
         backgroundColor: isPlaying ? '#666666' : '#dc3545',
-        color: '#ffffff',
-        border: '2px solid',
-        borderColor: isPlaying ? '#666666' : '#dc3545',
-        fontSize: '10px',
-        fontFamily: '"VT323", monospace',
-        cursor: isPlaying ? 'not-allowed' : 'pointer',
-        borderRadius: '50%',
-        transition: 'all 0.2s',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontWeight: 'bold'
+        cursor: isPlaying ? 'not-allowed' : 'pointer'
       }}
       title="위험 상황 시 가짜 통화"
     >

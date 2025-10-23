@@ -1,45 +1,45 @@
-import { useState, useEffect } from 'react'
-import MapView from './MapView'
-import AuthForm from './components/AuthForm'
-import LocationTracking from './components/LocationTracking'
-import ChatSection from './components/ChatSection'
-import AIChatSection from './components/AIChatSection'
-import ShareRequests from './components/ShareRequests'
-import SharedUsers from './components/SharedUsers'
-import ReceivedShares from './components/ReceivedShares'
-import UserSearch from './components/UserSearch'
-import FriendsList from './components/FriendsList'
-import ProfileSection from './components/ProfileSection'
-import { useSocket } from './hooks/useSocket'
-import { useAuth } from './hooks/useAuth'
-import { useLocationTracking } from './hooks/useLocationTracking'
-import { useLocationShare } from './hooks/useLocationShare'
-import { useChat } from './hooks/useChat'
-import { useVoiceSettings } from './hooks/useVoiceSettings'
-import { pushNotificationService } from './services/pushNotification'
+import { useState, useEffect } from "react";
+import MapView from "./MapView";
+import AuthForm from "./components/AuthForm";
+import LocationTracking from "./components/LocationTracking";
+import ChatSection from "./components/ChatSection";
+import AIChatSection from "./components/AIChatSection";
+import ShareRequests from "./components/ShareRequests";
+import SharedUsers from "./components/SharedUsers";
+import ReceivedShares from "./components/ReceivedShares";
+import UserSearch from "./components/UserSearch";
+import FriendsList from "./components/FriendsList";
+import ProfileSection from "./components/ProfileSection";
+import { useSocket } from "./hooks/useSocket";
+import { useAuth } from "./hooks/useAuth";
+import { useLocationTracking } from "./hooks/useLocationTracking";
+import { useLocationShare } from "./hooks/useLocationShare";
+import { useChat } from "./hooks/useChat";
+import { useVoiceSettings } from "./hooks/useVoiceSettings";
+import { pushNotificationService } from "./services/pushNotification";
 
 function App() {
   // 공통 상태
-  const [socket, setSocket] = useState(null)
-  const [status, setStatus] = useState('')
-  const [isConnecting, setIsConnecting] = useState(true)
-  const [users, setUsers] = useState([])
-  const [locations, setLocations] = useState([])
-  const [userPaths, setUserPaths] = useState(new Map())
+  const [socket, setSocket] = useState(null);
+  const [status, setStatus] = useState("");
+  const [isConnecting, setIsConnecting] = useState(true);
+  const [users, setUsers] = useState([]);
+  const [locations, setLocations] = useState([]);
+  const [userPaths, setUserPaths] = useState(new Map());
   const [friends, setFriends] = useState(() => {
-    const saved = localStorage.getItem('safetrack_friends')
-    return saved ? JSON.parse(saved) : []
-  })
-  const [pendingRequests, setPendingRequests] = useState(new Set())
+    const saved = localStorage.getItem("safetrack_friends");
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [pendingRequests, setPendingRequests] = useState(new Set());
 
   // UI 상태
-  const [showProfile, setShowProfile] = useState(false)
-  const [showUserList, setShowUserList] = useState(false)
-  const [showSearch, setShowSearch] = useState(false)
+  const [showProfile, setShowProfile] = useState(false);
+  const [showUserList, setShowUserList] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
 
   // 커스텀 훅 사용
-  const auth = useAuth(socket, setStatus)
-  const tracking = useLocationTracking(socket, auth.userId, setLocations)
+  const auth = useAuth(socket, setStatus);
+  const tracking = useLocationTracking(socket, auth.userId, setLocations);
   const share = useLocationShare(
     socket,
     setStatus,
@@ -47,7 +47,7 @@ function App() {
     tracking.isTracking,
     tracking.isSimulating,
     setLocations
-  )
+  );
   const chat = useChat(
     socket,
     setStatus,
@@ -56,26 +56,26 @@ function App() {
     locations,
     auth.userId,
     users
-  )
-  const voice = useVoiceSettings()
+  );
+  const voice = useVoiceSettings();
 
   // 위치 공유 중지 시 채팅 메시지 초기화를 위한 래퍼 함수
   const handleStopLocationShare = (targetUserId) => {
-    share.stopLocationShare(targetUserId)
-    chat.setChatMessages([])
-  }
+    share.stopLocationShare(targetUserId);
+    chat.setChatMessages([]);
+  };
 
   const handleStopReceivingShare = (fromUserId) => {
-    share.stopReceivingShare(fromUserId)
-    chat.setChatMessages([])
-  }
+    share.stopReceivingShare(fromUserId);
+    chat.setChatMessages([]);
+  };
 
   // 푸시 알림 권한 요청 (앱 시작 시)
   useEffect(() => {
     if (auth.isRegistered) {
-      pushNotificationService.requestPermission()
+      pushNotificationService.requestPermission();
     }
-  }, [auth.isRegistered])
+  }, [auth.isRegistered]);
 
   // useSocket 호출
   useSocket({
@@ -103,22 +103,22 @@ function App() {
     setIsConnecting,
     pendingRequests,
     setPendingRequests,
-    pushNotificationService
-  })
+    pushNotificationService,
+  });
 
   // 로그아웃 핸들러
   const handleLogout = () => {
     auth.handleLogout(() => {
-      setStatus('')
-      chat.setChatMessages([])
-      share.setReceivedShares([])
-      share.setSharedUsers([])
+      setStatus("");
+      chat.setChatMessages([]);
+      share.setReceivedShares([]);
+      share.setSharedUsers([]);
 
       if (tracking.isTracking || tracking.isSimulating) {
-        tracking.stopTracking()
+        tracking.stopTracking();
       }
-    })
-  }
+    });
+  };
 
   return (
     <div className="container">
@@ -126,9 +126,7 @@ function App() {
         <div className="sidebar">
           <div className="section">
             {isConnecting ? (
-              <div className="status">
-                🔄 서버 연결 중...
-              </div>
+              <div className="status">🔄 서버 연결 중...</div>
             ) : !auth.isRegistered ? (
               <AuthForm
                 isLoginMode={auth.isLoginMode}
@@ -187,9 +185,12 @@ function App() {
               <button
                 className="btn"
                 onClick={() => setShowUserList(!showUserList)}
-                style={{ width: '100%', marginBottom: showUserList ? '16px' : '0' }}
+                style={{
+                  width: "100%",
+                  marginBottom: showUserList ? "16px" : "0",
+                }}
               >
-                👥 사용자 목록 {showUserList ? '▲' : '▼'}
+                👥 친구 목록 {showUserList ? "▲" : "▼"}
               </button>
               {showUserList && (
                 <>
@@ -200,9 +201,12 @@ function App() {
                   <button
                     className="btn"
                     onClick={() => setShowSearch(!showSearch)}
-                    style={{ width: '100%', marginBottom: showSearch ? '16px' : '8px' }}
+                    style={{
+                      width: "100%",
+                      marginBottom: showSearch ? "16px" : "8px",
+                    }}
                   >
-                    🔍 사용자 검색 {showSearch ? '▲' : '▼'}
+                    🔍 친구 검색 {showSearch ? "▲" : "▼"}
                   </button>
                   {showSearch && (
                     <UserSearch
@@ -215,7 +219,7 @@ function App() {
                   <FriendsList
                     friends={friends}
                     onRequestShare={(targetUserId) => {
-                      socket.emit('requestLocationShare', { targetUserId })
+                      socket.emit("requestLocationShare", { targetUserId });
                     }}
                     sharedUsers={share.sharedUsers}
                     receivedShares={share.receivedShares}
@@ -235,7 +239,9 @@ function App() {
             currentUserId={auth.userId}
             userPaths={userPaths}
             isTracking={tracking.isTracking || tracking.isSimulating}
-            myLocationHistory={locations.filter(loc => loc.userId === auth.userId)}
+            myLocationHistory={locations.filter(
+              (loc) => loc.userId === auth.userId
+            )}
           />
 
           {/* 연결된 사용자가 있으면 일반 채팅, 없으면 AI 채팅 */}
@@ -260,7 +266,7 @@ function App() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;

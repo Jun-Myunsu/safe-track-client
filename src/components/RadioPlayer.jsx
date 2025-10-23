@@ -39,19 +39,9 @@ function RadioPlayer() {
       
       <button
         onClick={togglePlay}
+        className="icon-btn radio-btn"
         style={{
-          background: isPlaying ? '#ff4444' : '#4CAF50',
-          border: 'none',
-          borderRadius: '50%',
-          width: '32px',
-          height: '32px',
-          color: 'white',
-          cursor: 'pointer',
-          fontSize: '14px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
+          backgroundColor: isPlaying ? '#ff4444' : '#4CAF50'
         }}
         title={isPlaying ? '음악 일시정지' : '음악 재생'}
       >

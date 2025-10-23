@@ -180,7 +180,7 @@ body::before {
   background: #3a3a3a;
   color: #ffffff;
   cursor: pointer;
-  font-size: 1.3rem;
+  font-size: 0.9rem;
   font-weight: 400;
   transition: all 0.2s ease;
   border-radius: 0;
@@ -263,7 +263,7 @@ body::before {
   color: #ffffff;
   box-shadow: 3px 3px 0px #000000;
   font-weight: 900;
-  font-size: 1.2rem;
+  font-size: 0.85rem;
   font-family: '아리따 돋움', 'Arita-dotum-Medium', sans-serif;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -540,7 +540,7 @@ body::before {
 }
 
 .map-container {
-  height: 500px;
+  height: 400px;
   width: 100%;
   max-width: 100%;
   margin: 16px 0 0 0;
@@ -562,7 +562,7 @@ body::before {
 .map-section {
   background: #2a2a2a;
   margin: 0;
-  padding: 24px;
+  padding: 10px;
   border: 2px solid #555555;
   border-radius: 0;
   box-shadow: 4px 4px 0px #000000;
@@ -594,6 +594,13 @@ body::before {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
+}
+
+@media (min-width: 1025px) {
+  .btn-group .btn {
+    flex: 1;
+    min-width: 0;
+  }
 }
 
 @media (max-width: 1024px) {
@@ -641,7 +648,7 @@ p {
   background: #3a3a3a;
   color: #ffffff;
   cursor: pointer;
-  font-size: 1.3rem;
+  font-size: 0.9rem;
   font-weight: 500;
   transition: all 0.2s ease;
   border-radius: 0;
@@ -826,5 +833,439 @@ p {
 
   .location-time {
     font-size: 0.85rem;
+  }
+}
+
+/* 친구 목록 메신저 스타일 */
+.friend-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  margin: 0 0 6px 0;
+  background: #2a2a2a;
+  border: 1px solid #555555;
+  border-radius: 0;
+  box-shadow: 2px 2px 0px #000000;
+  font-family: '아리따 돋움', 'Arita-dotum-Medium', sans-serif;
+}
+
+.friend-item:hover {
+  background: #333333;
+  border-color: #777777;
+}
+
+.friend-item.offline {
+  background: #1a1a1a;
+  border-color: #3a3a3a;
+  opacity: 0.5;
+}
+
+.friend-item.offline:hover {
+  background: #222222;
+  border-color: #444444;
+}
+
+.friend-item.offline .friend-name {
+  color: #666666;
+}
+
+.friend-item.offline .friend-status {
+  opacity: 0.5;
+}
+
+.friend-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.friend-name {
+  font-size: 1rem;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.friend-status {
+  font-size: 0.9rem;
+}
+
+.friend-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-mini {
+  padding: 4px 10px;
+  border: 1px solid #888888;
+  background: #3a3a3a;
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 400;
+  transition: all 0.2s ease;
+  border-radius: 0;
+  font-family: '아리따 돋움', 'Arita-dotum-Medium', sans-serif;
+  box-shadow: 1px 1px 0px #000000;
+  white-space: nowrap;
+}
+
+.btn-mini:hover {
+  background: #4a4a4a;
+  border-color: #aaaaaa;
+}
+
+.btn-mini:disabled {
+  background: #1a1a1a;
+  border-color: #3a3a3a;
+  color: #555555;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.btn-mini.btn-remove {
+  background: #4a4a4a;
+  border-color: #666666;
+  color: #cccccc;
+}
+
+.btn-mini.btn-remove:hover {
+  background: #5a5a5a;
+  border-color: #888888;
+  color: #ffffff;
+}
+
+@media (max-width: 1024px) {
+  .friend-item {
+    padding: 6px 10px;
+  }
+
+  .friend-name {
+    font-size: 0.9rem;
+  }
+
+  .friend-status {
+    font-size: 0.8rem;
+  }
+
+  .btn-mini {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+  }
+}
+
+/* 모달 스타일 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+}
+
+.modal-content {
+  background: #2a2a2a;
+  border: 2px solid #555555;
+  border-radius: 0;
+  box-shadow: 6px 6px 0px #000000;
+  max-width: 600px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.story-modal {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 2px solid #555555;
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 1.3rem;
+  font-family: '아리따 돋움', 'Arita-dotum-Medium', sans-serif;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: #ffffff;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.modal-close:hover {
+  color: #ff6b6b;
+  transform: scale(1.2);
+}
+
+.modal-body {
+  padding: 24px;
+  color: #e0e0e0;
+  font-size: 1.1rem;
+  line-height: 1.8;
+  font-family: '아리따 돋움', 'Arita-dotum-Medium', sans-serif;
+}
+
+.modal-body p {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.modal-footer {
+  display: flex;
+  gap: 12px;
+  padding: 20px;
+  border-top: 2px solid #555555;
+}
+
+.modal-footer .btn {
+  flex: 1;
+}
+
+.story-btn {
+  background: #ffd700 !important;
+  border-radius: 50% !important;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 !important;
+  border: none !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.story-btn:hover {
+  background: #ffed4e !important;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.4) !important;
+}
+
+.icon-btn {
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  transition: all 0.2s ease;
+}
+
+.icon-btn:hover:not(:disabled) {
+  box-shadow: 0 3px 6px rgba(0,0,0,0.4);
+  transform: translateY(-1px);
+}
+
+.icon-btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.radio-btn:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.sos-btn {
+  font-size: 10px;
+  font-family: '"VT323", monospace';
+  font-weight: bold;
+}
+
+.sos-btn:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+/* 나침판 스타일 */
+.compass-container {
+  position: relative;
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, rgba(42, 42, 42, 0.95), rgba(30, 30, 30, 0.95));
+  border: 2px solid #666666;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.compass-ring {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.compass-mark {
+  position: absolute;
+  font-size: 0.65rem;
+  font-weight: bold;
+  color: #999999;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.compass-mark.n {
+  top: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #ff6b6b;
+  font-size: 0.75rem;
+}
+
+.compass-mark.e {
+  right: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.compass-mark.s {
+  bottom: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.compass-mark.w {
+  left: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.compass-needle {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.3s ease-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.needle-north {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-left: 3px solid transparent;
+  border-right: 3px solid transparent;
+  border-bottom: 18px solid #ff6b6b;
+  top: 8px;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+.needle-south {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-left: 3px solid transparent;
+  border-right: 3px solid transparent;
+  border-top: 18px solid #888888;
+  bottom: 8px;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+.compass-center {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: radial-gradient(circle, #ffffff, #cccccc);
+  border-radius: 50%;
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.6), inset 0 1px 1px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+}
+
+.compass-fallback {
+  font-size: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .compass-container {
+    width: 45px;
+    height: 45px;
+  }
+
+  .compass-mark {
+    font-size: 0.6rem;
+  }
+
+  .compass-mark.n {
+    font-size: 0.7rem;
+  }
+
+  .needle-north {
+    border-left: 2.5px solid transparent;
+    border-right: 2.5px solid transparent;
+    border-bottom: 15px solid #ff6b6b;
+    top: 7px;
+  }
+
+  .needle-south {
+    border-left: 2.5px solid transparent;
+    border-right: 2.5px solid transparent;
+    border-top: 15px solid #888888;
+    bottom: 7px;
+  }
+
+  .modal-content {
+    max-width: 100%;
+    max-height: 90vh;
+  }
+
+  .modal-header {
+    padding: 16px;
+  }
+
+  .modal-header h3 {
+    font-size: 1.1rem;
+  }
+
+  .modal-body {
+    padding: 16px;
+    font-size: 1rem;
+  }
+
+  .modal-body p {
+    font-size: 1rem;
+  }
+
+  .modal-footer {
+    padding: 16px;
+    flex-direction: column;
   }
 }

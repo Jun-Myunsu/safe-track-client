@@ -1,5 +1,6 @@
 import RadioPlayer from './RadioPlayer'
 import FakeCall from './FakeCall'
+import StoryBook from './StoryBook'
 import { speechService } from '../services/speechService'
 
 /**
@@ -35,14 +36,24 @@ const ProfileSection = ({
         justifyContent: 'space-between',
         marginBottom: '16px'
       }}>
-        <h3 style={{ margin: 0 }}>로그인 상태</h3>
+        <h3 
+          style={{ margin: 0, cursor: 'pointer' }}
+          onClick={() => setShowProfile(false)}
+        >
+          👤 {userId}
+        </h3>
         <div style={{ display: 'flex', gap: '8px' }}>
+          <StoryBook />
           <RadioPlayer />
           <FakeCall />
         </div>
       </div>
 
-      <div className="status success">
+      <div 
+        className="status success" 
+        style={{ cursor: 'pointer' }}
+        onClick={() => setShowProfile(false)}
+      >
         ✅ {userId}로 로그인 중
       </div>
 

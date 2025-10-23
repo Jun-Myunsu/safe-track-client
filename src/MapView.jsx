@@ -1,6 +1,7 @@
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
 import { useEffect, useState, useMemo } from 'react'
 import L from 'leaflet'
+import Compass from './components/Compass'
 
 // 기본 마커 아이콘 설정
 delete L.Icon.Default.prototype._getIconUrl
@@ -130,6 +131,16 @@ function MapView({ locations, currentLocation, currentUserId, isTracking, myLoca
 
   return (
     <div style={{ position: 'relative' }}>
+      {/* 동작하는 나침판 */}
+      <div style={{
+        position: 'absolute',
+        bottom: '10px',
+        left: '10px',
+        zIndex: 1000
+      }}>
+        <Compass />
+      </div>
+      
       <div style={{
         position: 'absolute',
         top: '10px',
@@ -306,7 +317,7 @@ function MapView({ locations, currentLocation, currentUserId, isTracking, myLoca
         }, [locations, currentUserId])}
         
         {/* 응급시설 마커 */}
-        {showEmergency && useMemo(() => (
+        {showEmergency && (
           <>
             {emergencyLocations.hospitals.map((hospital, index) => (
               <Marker
@@ -371,7 +382,7 @@ function MapView({ locations, currentLocation, currentUserId, isTracking, myLoca
               </Marker>
             ))}
           </>
-        ), [emergencyLocations])}
+        )}
       </MapContainer>
     </div>
   )
