@@ -223,6 +223,7 @@ export function useSocket(handlers) {
         handlers.setStatus(`⚠️ ${data.reason}`)
         setTimeout(() => handlers.setStatus(''), 5000)
         handlers.setIsRegistered(false)
+        handlers.setIsConnecting(false)
         localStorage.removeItem('safetrack_sessionId')
         localStorage.removeItem('safetrack_isRegistered')
         if (handlers.handleLogout) {
