@@ -20,10 +20,12 @@ function FriendsList({ friends, onRequestShare, sharedUsers, receivedShares, soc
       {friends.map(friend => {
         const alreadySharing = isAlreadySharing(friend.id)
         return (
-          <div key={friend.id} className="user-item" style={{ padding: '10px', margin: '0 0 6px 0' }}>
-            <div style={{ flex: 1 }}>
-              <span style={{ fontSize: '1.2rem', fontFamily: '"VT323", monospace' }}>{friend.name || friend.id}</span>
-              <div style={{ fontSize: '1.1rem', opacity: 0.7, marginTop: '2px', fontFamily: '"VT323", monospace' }}>
+          <div key={friend.id} className="user-item" style={{ padding: '12px', margin: '0 0 8px 0', flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
+            <div style={{ width: '100%' }}>
+              <div style={{ fontSize: '1.2rem', fontFamily: '"VT323", monospace', marginBottom: '4px' }}>
+                {friend.name || friend.id}
+              </div>
+              <div style={{ fontSize: '1rem', opacity: 0.7, fontFamily: '"VT323", monospace' }}>
                 {friend.isOnline ? (
                   friend.isTracking ? '🟢 추적중' : '🟡 온라인'
                 ) : (
@@ -32,15 +34,15 @@ function FriendsList({ friends, onRequestShare, sharedUsers, receivedShares, soc
                 {alreadySharing && ' • 공유중'}
               </div>
             </div>
-            <div style={{ display: 'flex', gap: '4px' }}>
+            <div style={{ display: 'flex', gap: '8px', alignSelf: 'flex-end' }}>
               {friend.isOnline && (
                 <button
                   className={`btn ${alreadySharing ? 'btn-secondary' : 'btn-secondary'}`}
                   onClick={() => !alreadySharing && !pendingRequests.has(friend.id) && onRequestShare(friend.id)}
                   disabled={alreadySharing || pendingRequests.has(friend.id)}
                   style={{
-                    fontSize: '1.1rem',
-                    padding: '4px 8px',
+                    fontSize: '1rem',
+                    padding: '6px 12px',
                     opacity: (alreadySharing || pendingRequests.has(friend.id)) ? 0.5 : 1
                   }}
                 >
@@ -52,8 +54,8 @@ function FriendsList({ friends, onRequestShare, sharedUsers, receivedShares, soc
                 onClick={() => socket.emit('removeFriend', { friendId: friend.id })}
                 disabled={alreadySharing}
                 style={{ 
-                  fontSize: '1.1rem', 
-                  padding: '4px 8px',
+                  fontSize: '1rem', 
+                  padding: '6px 12px',
                   opacity: alreadySharing ? 0.5 : 1
                 }}
               >

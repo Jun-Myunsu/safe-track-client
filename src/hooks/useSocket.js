@@ -103,7 +103,8 @@ export function useSocket(handlers) {
             handlers.startTracking()
           }
         } else {
-          handlers.setStatus(`❌ ${data.targetName}이 내 위치 공유를 거부했습니다`)
+          const reason = data.reason === 'busy' ? '다른 사용자와 공유 중입니다' : '거부했습니다'
+          handlers.setStatus(`❌ ${data.targetName}이 내 위치 공유를 ${reason}`)
           // 음성 알림
           speechService.notifyShareRejected(data.targetName)
         }
@@ -137,6 +138,10 @@ export function useSocket(handlers) {
             return newSet
           })
         }
+      },
+      shareResponseError: (data) => {
+        handlers.setStatus(`❌ ${data.message}`)
+        setTimeout(() => handlers.setStatus(''), 3000)
       },
       shareRequestSent: (data) => {
         handlers.setStatus(`📱 ${data.targetName}에게 내 위치 공유 요청을 보냈습니다`)
@@ -209,6 +214,18 @@ export function useSocket(handlers) {
         handlers.setIsRegistered(false)
         localStorage.removeItem('safetrack_sessionId')
         localStorage.removeItem('safetrack_isRegistered')
+      },
+      restoreState: (data) => {
+        // 공유 상태 복원
+        if (data.sharedUsers && data.sharedUsers.length > 0) {
+          handlers.setSharedUsers(data.sharedUsers)
+          localStorage.setItem('safetrack_sharedUsers', JSON.stringify(data.sharedUsers))
+        }
+        if (data.receivedShares && data.receivedShares.length > 0) {
+          handlers.setReceivedShares(data.receivedShares)
+          localStorage.setItem('safetrack_receivedShares', JSON.stringify(data.receivedShares))
+        }
+        console.log('✅ 공유 상태 복원됨:', data)
       },
       loginError: (data) => {
         if (isAutoLogin) {

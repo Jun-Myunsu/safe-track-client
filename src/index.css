@@ -469,10 +469,12 @@ body::before {
   border-radius: 0;
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   font-size: 0.9rem;
   font-family: '아리따 돋움', 'Arita-dotum-Medium', sans-serif;
   box-shadow: 2px 2px 0px #000000;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .user-item:hover {
@@ -495,11 +497,9 @@ body::before {
 
 @media (max-width: 1024px) {
   .user-item {
-    flex-direction: column;
-    gap: 10px;
-    align-items: flex-start;
     padding: 10px;
     font-size: 0.85rem;
+    gap: 10px;
   }
 
   .user-item > div {

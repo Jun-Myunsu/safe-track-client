@@ -39,7 +39,22 @@
       "Bash(git commit -m \"$(cat <<''EOF''\nrefactor: Move voice settings to login status section\n\n- Move voice enable checkbox to profile section\n- Move voice selection dropdown to profile section\n- Remove standalone VoiceSettings component\n- Simplify UI by integrating settings into existing profile area\n- Keep only essential controls (checkbox and voice selector)\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
       "Bash(git commit -m \"$(cat <<''EOF''\nstyle: Fix mobile responsive layout to support screens below 484px\n\n- Add width and max-width constraints to body and #root\n- Remove min-width restrictions from buttons on mobile\n- Change button white-space from nowrap to normal for text wrapping\n- Reduce padding and margins across all mobile elements\n- Add media query for screens <= 480px with aggressive optimization\n- Reduce section padding (12px -> 8px -> 6px at 480px)\n- Reduce button padding and font sizes for better fit\n- Reduce map height (350px -> 300px -> 250px at 480px)\n- Add border-width reduction on mobile (2px -> 1px)\n- Enable flex-wrap on btn-group for better small screen support\n- Fix overflow-x issues with max-width: 100vw and 100%\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
       "Bash(git add src/services/audioService.js src/hooks/useSocket.js)",
-      "Bash(git commit -m \"$(cat <<''EOF''\nfeat: Replace chat voice notification with subtle audio beep\n\n- Create audioService using Web Audio API\n- Generate soft notification sounds with sine waves\n- Implement double-beep for message notifications\n- Replace speechService with audioService for chat messages\n- Keep voice notifications for other events (share requests, etc.)\n- Add volume fade in/out for smooth audio experience\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
+      "Bash(git commit -m \"$(cat <<''EOF''\nfeat: Replace chat voice notification with subtle audio beep\n\n- Create audioService using Web Audio API\n- Generate soft notification sounds with sine waves\n- Implement double-beep for message notifications\n- Replace speechService with audioService for chat messages\n- Keep voice notifications for other events (share requests, etc.)\n- Add volume fade in/out for smooth audio experience\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(npm run build)",
+      "Bash(npm run dev)",
+      "Bash(npm install openai)",
+      "Bash(npm start)",
+      "Bash(netstat -ano)",
+      "Bash(findstr \":3000\")",
+      "Bash(findstr \"LISTENING\")",
+      "Bash(taskkill /F /PID 40544)",
+      "Bash(taskkill //F //PID 40544)",
+      "Bash(findstr \":3001\")",
+      "Bash(taskkill /F /PID 58220)",
+      "Bash(taskkill //F //PID 58220)",
+      "Bash(cat useSocket.js)",
+      "Bash(taskkill /F /PID 56340)",
+      "Bash(cmd /c taskkill /F /PID 56340)"
     ],
     "deny": [],
     "ask": []

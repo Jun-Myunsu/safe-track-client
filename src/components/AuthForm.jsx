@@ -19,6 +19,7 @@ function AuthForm({
             placeholder="ID"
             value={userId}
             onChange={(e) => handleUserIdChange(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleAuth()}
           />
           {!isLoginMode && userId && (
             <div style={{ fontSize: '1.1rem', marginTop: '5px', fontFamily: '"VT323", monospace' }}>
@@ -37,6 +38,7 @@ function AuthForm({
           placeholder="비밀번호"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          onKeyPress={(e) => e.key === 'Enter' && handleAuth()}
         />
         <button 
           className="btn btn-primary" 
