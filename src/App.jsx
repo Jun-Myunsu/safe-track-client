@@ -70,6 +70,20 @@ function App() {
     chat.setChatMessages([]);
   };
 
+  // 로그아웃 핸들러
+  const handleLogout = () => {
+    auth.handleLogout(() => {
+      setStatus("");
+      chat.setChatMessages([]);
+      share.setReceivedShares([]);
+      share.setSharedUsers([]);
+
+      if (tracking.isTracking || tracking.isSimulating) {
+        tracking.stopTracking();
+      }
+    });
+  };
+
   // 푸시 알림 권한 요청 (앱 시작 시)
   useEffect(() => {
     if (auth.isRegistered) {
@@ -104,21 +118,9 @@ function App() {
     pendingRequests,
     setPendingRequests,
     pushNotificationService,
+    handleLogout,
+    stopTracking: tracking.stopTracking,
   });
-
-  // 로그아웃 핸들러
-  const handleLogout = () => {
-    auth.handleLogout(() => {
-      setStatus("");
-      chat.setChatMessages([]);
-      share.setReceivedShares([]);
-      share.setSharedUsers([]);
-
-      if (tracking.isTracking || tracking.isSimulating) {
-        tracking.stopTracking();
-      }
-    });
-  };
 
   return (
     <div className="container">

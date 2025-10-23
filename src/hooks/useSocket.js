@@ -220,15 +220,13 @@ export function useSocket(handlers) {
         localStorage.removeItem('safetrack_isRegistered')
       },
       forceLogout: (data) => {
-        handlers.setStatus(`⚠️ ${data.reason}`)
-        setTimeout(() => handlers.setStatus(''), 5000)
-        handlers.setIsRegistered(false)
-        handlers.setIsConnecting(false)
-        localStorage.removeItem('safetrack_sessionId')
-        localStorage.removeItem('safetrack_isRegistered')
-        if (handlers.handleLogout) {
-          handlers.handleLogout(() => {})
-        }
+        alert(`⚠️ ${data.reason}`)
+        
+        // 모든 로컬 스토리지 정리
+        localStorage.clear()
+        
+        // 강제 새로고침
+        window.location.reload()
       },
       error: (data) => {
         handlers.setStatus(`❌ ${data.message}`)
