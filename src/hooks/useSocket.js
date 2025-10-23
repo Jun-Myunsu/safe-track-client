@@ -53,6 +53,14 @@ export function useSocket(handlers) {
             ? { ...user, isTracking: data.isTracking }
             : user
         ))
+        // 친구 목록도 업데이트
+        if (handlers.friends && handlers.setFriends) {
+          handlers.setFriends(prev => prev.map(friend => 
+            friend.id === data.userId 
+              ? { ...friend, isTracking: data.isTracking }
+              : friend
+          ))
+        }
         // 현재 사용자의 추적 상태 업데이트
         if (data.userId === handlers.userId && !data.isTracking) {
           if (handlers.isTracking || handlers.isSimulating) {

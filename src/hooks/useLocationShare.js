@@ -61,14 +61,9 @@ export const useLocationShare = (socket, setStatus, stopTracking, isTracking, is
     socket.emit('stopLocationShare', { targetUserId })
     setSharedUsers(prev => prev.filter(user => user.id !== targetUserId))
 
-    // 위치 추적 중지
-    if (isTracking || isSimulating) {
-      stopTracking()
-    }
-
     setStatus(SUCCESS_MESSAGES.SHARE_STOPPED(targetUserId))
     setTimeout(() => setStatus(''), TIMEOUTS.STATUS_MESSAGE)
-  }, [socket, isTracking, isSimulating, stopTracking, setStatus])
+  }, [socket, setStatus])
 
   /**
    * 다른 사용자로부터 받는 공유 중지
@@ -78,20 +73,14 @@ export const useLocationShare = (socket, setStatus, stopTracking, isTracking, is
 
     socket.emit('stopReceivingShare', { fromUserId })
     socket.emit('stopLocationShare', { targetUserId: fromUserId })
-    socket.emit('removeUserLocation', { userId: fromUserId })
 
     setReceivedShares(prev => prev.filter(user => user.id !== fromUserId))
     setLocations(prev => prev.filter(loc => loc.userId !== fromUserId))
     setSharedUsers(prev => prev.filter(user => user.id !== fromUserId))
 
-    // 위치 추적 중지
-    if (isTracking || isSimulating) {
-      stopTracking()
-    }
-
     setStatus(SUCCESS_MESSAGES.SHARE_FULLY_STOPPED(fromUserId))
     setTimeout(() => setStatus(''), TIMEOUTS.STATUS_MESSAGE)
-  }, [socket, isTracking, isSimulating, stopTracking, setStatus, setLocations])
+  }, [socket, setStatus, setLocations])
 
   return {
     // 상태
