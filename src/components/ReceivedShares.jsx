@@ -9,35 +9,35 @@ function ReceivedShares({ receivedShares, stopReceivingShare }) {
           key={user.id}
           className="user-item receiving"
           style={{
-            flexDirection: "column",
-            alignItems: "flex-start",
-            gap: "12px",
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "8px",
           }}
         >
           <span
-            style={{ fontFamily: '"VT323", monospace', fontSize: "1.2rem" }}
+            style={{
+              fontFamily: '"VT323", monospace',
+              fontSize: "1.2rem",
+              flex: 1,
+            }}
           >
-            <strong>{user.name}</strong> ({user.id})의 위치 받는 중
+            <strong>{user.name}</strong> ({user.id})
           </span>
           <button
             className="btn btn-danger"
             onClick={() => stopReceivingShare(user.id)}
             style={{
-              width: "100%",
-              fontSize: "1.1rem",
-              padding: "12px 16px",
+              fontSize: "0.85rem",
+              padding: "6px 12px",
               fontFamily: '"VT323", monospace',
               fontWeight: "bold",
-              textTransform: "uppercase",
-              letterSpacing: "1px",
-              background: "linear-gradient(145deg, #dc3545, #b02a37)",
-              border: "3px solid #8b1e2b",
-              boxShadow:
-                "4px 4px 0px #000000, inset 0px 0px 0px 1px rgba(255,255,255,0.1)",
-              transition: "all 0.2s ease",
+              whiteSpace: "nowrap",
+              width: "auto",
+              minWidth: "0",
             }}
           >
-            🛑 STOP
+            🛑 중지
           </button>
         </div>
       ))}

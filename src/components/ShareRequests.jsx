@@ -1,8 +1,18 @@
+import { useEffect, useRef } from 'react'
+
 function ShareRequests({ shareRequests, respondToRequest }) {
+  const sectionRef = useRef(null)
+
+  useEffect(() => {
+    if (shareRequests.length > 0 && sectionRef.current) {
+      sectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }, [shareRequests.length])
+
   if (shareRequests.length === 0) return null
 
   return (
-    <div className="section">
+    <div className="section" ref={sectionRef}>
       <h3>위치 공유 요청 알림</h3>
       {shareRequests.map(request => (
         <div key={request.requestId} className="user-item">

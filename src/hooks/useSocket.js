@@ -161,11 +161,7 @@ export function useSocket(handlers) {
       },
       messageReceived: (data) => {
         handlers.setChatMessages(prev => [...prev, { ...data, type: 'received' }])
-        // 푸시 알림 표시
-        if (handlers.pushNotificationService) {
-          handlers.pushNotificationService.showNewMessage(data.fromName, data.message)
-        }
-        // 작은 알림음 재생 (음성 대신)
+        // 작은 알림음 재생
         audioService.playMessageNotification()
       },
       messageSent: (data) => handlers.setChatMessages(prev => [...prev, { ...data, type: 'sent' }]),
@@ -222,6 +218,20 @@ export function useSocket(handlers) {
         handlers.setIsRegistered(false)
         localStorage.removeItem('safetrack_sessionId')
         localStorage.removeItem('safetrack_isRegistered')
+      },
+      forceLogout: (data) => {
+        handlers.setStatus(`⚠️ ${data.reason}`)
+        setTimeout(() => handlers.setStatus(''), 5000)
+        handlers.setIsRegistered(false)
+        localStorage.removeItem('safetrack_sessionId')
+        localStorage.removeItem('safetrack_isRegistered')
+        if (handlers.handleLogout) {
+          handlers.handleLogout(() => {})
+        }
+      },
+      error: (data) => {
+        handlers.setStatus(`❌ ${data.message}`)
+        setTimeout(() => handlers.setStatus(''), 3000)
       },
       restoreState: (data) => {
         // 공유 상태 복원
@@ -296,7 +306,6 @@ export function useSocket(handlers) {
         isAutoLogin = true
         newSocket.emit('validateSession', { sessionId })
       } else if (handlers.isRegistered && handlers.userId) {
-        // 기존 비밀번호 방식 호환성
         const savedUsers = JSON.parse(localStorage.getItem('safetrack_users') || '[]')
         const savedUser = savedUsers.find(user => user.userId === handlers.userId)
         if (savedUser) {
@@ -304,6 +313,11 @@ export function useSocket(handlers) {
           newSocket.emit('login', { userId: handlers.userId, password: savedUser.password })
         }
       }
+    })
+
+    newSocket.on('connect_error', (error) => {
+      console.error('서버 연결 실패:', error)
+      handlers.setIsConnecting(true)
     })
 
     // Keep-alive: 5분마다 서버에 ping 전송

@@ -44,30 +44,30 @@ function UserSearch({ socket, userId, friends, setStatus }) {
 
   return (
     <div>
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', alignItems: 'stretch' }}>
         <input
           type="text"
           placeholder="사용자 ID 검색"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-          className="input-group"
           style={{
             flex: 1,
             padding: '8px 12px',
             border: '2px solid #555555',
             borderRadius: '0',
-            fontSize: '1.2rem',
+            fontSize: '1rem',
             background: '#1a1a1a',
             color: '#e0e0e0',
-            fontFamily: '"VT323", monospace'
+            fontFamily: '"VT323", monospace',
+            boxSizing: 'border-box'
           }}
         />
         <button
           className="btn"
           onClick={handleSearch}
           disabled={isSearching || !searchQuery.trim()}
-          style={{ fontSize: '1.1rem', padding: '8px 12px' }}
+          style={{ fontSize: '0.9rem', padding: '8px 16px', width: 'auto', minWidth: '0', whiteSpace: 'nowrap' }}
         >
           {isSearching ? '검색중...' : '검색'}
         </button>
