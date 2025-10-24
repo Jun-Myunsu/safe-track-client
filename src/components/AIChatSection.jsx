@@ -8,7 +8,11 @@ const AIChatSection = ({ socket, userId, currentLocation }) => {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [isListening, setIsListening] = useState(false)
+  const [isSpeaking, setIsSpeaking] = useState(false)
   const messagesEndRef = useRef(null)
+  const recognitionRef = useRef(null)
+  const synthRef = useRef(window.speechSynthesis)
 
   // 스크롤을 맨 아래로
   const scrollToBottom = () => {
@@ -18,6 +22,32 @@ const AIChatSection = ({ socket, userId, currentLocation }) => {
   useEffect(() => {
     scrollToBottom()
   }, [messages])
+
+  // 음성 인식 초기화
+  useEffect(() => {
+    if ('webkitSpeechRecognition' in window) {
+      const recognition = new window.webkitSpeechRecognition()
+      recognition.continuous = false
+      recognition.interimResults = false
+      recognition.lang = 'ko-KR'
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript
+        setInput(transcript)
+        setIsListening(false)
+      }
+
+      recognition.onerror = () => {
+        setIsListening(false)
+      }
+
+      recognition.onend = () => {
+        setIsListening(false)
+      }
+
+      recognitionRef.current = recognition
+    }
+  }, [])
 
   // AI 응답 이벤트 리스너
   useEffect(() => {
@@ -31,6 +61,16 @@ const AIChatSection = ({ socket, userId, currentLocation }) => {
         isAI: true
       }])
       setIsLoading(false)
+      
+      // AI 응답 음성 출력
+      if (synthRef.current && !synthRef.current.speaking) {
+        const utterance = new SpeechSynthesisUtterance(data.message)
+        utterance.lang = 'ko-KR'
+        utterance.rate = 1.0
+        utterance.onstart = () => setIsSpeaking(true)
+        utterance.onend = () => setIsSpeaking(false)
+        synthRef.current.speak(utterance)
+      }
     }
 
     const handleAIError = (error) => {
@@ -89,6 +129,29 @@ const AIChatSection = ({ socket, userId, currentLocation }) => {
 
     socket.emit('clearAIConversation')
     setMessages([])
+  }
+
+  // 음성 입력 시작/중지
+  const toggleVoiceInput = () => {
+    if (!recognitionRef.current) {
+      alert('음성 인식이 지원되지 않는 브라우저입니다')
+      return
+    }
+
+    if (isListening) {
+      recognitionRef.current.stop()
+    } else {
+      recognitionRef.current.start()
+      setIsListening(true)
+    }
+  }
+
+  // 음성 출력 중지
+  const stopSpeaking = () => {
+    if (synthRef.current) {
+      synthRef.current.cancel()
+      setIsSpeaking(false)
+    }
   }
 
   return (
@@ -211,28 +274,51 @@ const AIChatSection = ({ socket, userId, currentLocation }) => {
       <div style={{
         display: 'flex',
         gap: '8px',
-        width: '100%'
+        width: '100%',
+        alignItems: 'stretch'
       }}>
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyPress={handleKeyPress}
-          placeholder="AI에게 메시지 보내기..."
-          disabled={isLoading}
-          style={{
-            flex: 1,
-            minWidth: 0,
-            padding: '12px',
-            border: '2px solid #555555',
-            background: '#1a1a1a',
-            color: '#e0e0e0',
-            fontSize: '1rem',
-            fontFamily: '"VT323", monospace',
-            borderRadius: '0',
-            boxSizing: 'border-box'
-          }}
-        />
+        <div style={{ position: 'relative', flex: 1 }}>
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder="AI에게 메시지 보내기..."
+            disabled={isLoading}
+            style={{
+              width: '100%',
+              height: '100%',
+              padding: '12px 45px 12px 12px',
+              border: '2px solid #555555',
+              background: '#1a1a1a',
+              color: '#e0e0e0',
+              fontSize: '1rem',
+              fontFamily: '"VT323", monospace',
+              borderRadius: '0',
+              boxSizing: 'border-box'
+            }}
+          />
+          <button
+            onClick={toggleVoiceInput}
+            disabled={isLoading}
+            style={{
+              position: 'absolute',
+              right: '8px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '1.2rem',
+              padding: '4px',
+              color: isListening ? '#ff4444' : '#888888',
+              transition: 'color 0.2s'
+            }}
+            title="음성 입력"
+          >
+            🎤
+          </button>
+        </div>
         <button
           className="btn btn-primary"
           onClick={sendMessage}
