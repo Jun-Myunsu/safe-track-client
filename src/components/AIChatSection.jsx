@@ -10,6 +10,10 @@ const AIChatSection = ({ socket, userId, currentLocation }) => {
   const [isLoading, setIsLoading] = useState(false)
   const [isListening, setIsListening] = useState(false)
   const [isSpeaking, setIsSpeaking] = useState(false)
+  const [voiceEnabled, setVoiceEnabled] = useState(() => {
+    const saved = localStorage.getItem('ai_voice_enabled')
+    return saved !== 'false'
+  })
   const messagesEndRef = useRef(null)
   const recognitionRef = useRef(null)
   const synthRef = useRef(window.speechSynthesis)
@@ -62,8 +66,8 @@ const AIChatSection = ({ socket, userId, currentLocation }) => {
       }])
       setIsLoading(false)
       
-      // AI 응답 음성 출력
-      if (synthRef.current && !synthRef.current.speaking) {
+      // AI 응답 음성 출력 (음성 활성화 시에만)
+      if (voiceEnabled && synthRef.current && !synthRef.current.speaking) {
         const utterance = new SpeechSynthesisUtterance(data.message)
         utterance.lang = 'ko-KR'
         utterance.rate = 1.0
@@ -154,6 +158,16 @@ const AIChatSection = ({ socket, userId, currentLocation }) => {
     }
   }
 
+  // 음성 출력 토글
+  const toggleVoice = () => {
+    const newValue = !voiceEnabled
+    setVoiceEnabled(newValue)
+    localStorage.setItem('ai_voice_enabled', newValue.toString())
+    if (!newValue && isSpeaking) {
+      stopSpeaking()
+    }
+  }
+
   return (
     <div className="section" style={{ marginTop: '16px' }}>
       <div style={{
@@ -165,19 +179,35 @@ const AIChatSection = ({ socket, userId, currentLocation }) => {
         <h3 style={{ margin: 0, fontFamily: '"VT323", monospace' }}>
           🤖 AI 채팅
         </h3>
-        {messages.length > 0 && (
+        <div style={{ display: 'flex', gap: '8px' }}>
           <button
-            className="btn btn-secondary"
-            onClick={clearConversation}
+            className="btn"
+            onClick={toggleVoice}
             style={{
               width: 'auto',
               minWidth: 'auto',
-              padding: '8px 16px'
+              padding: '8px 16px',
+              background: voiceEnabled ? '#3a3a3a' : '#1a1a1a',
+              opacity: voiceEnabled ? 1 : 0.5
             }}
+            title={voiceEnabled ? '음성 출력 ON' : '음성 출력 OFF'}
           >
-            초기화
+            {voiceEnabled ? '🔊' : '🔇'}
           </button>
-        )}
+          {messages.length > 0 && (
+            <button
+              className="btn btn-secondary"
+              onClick={clearConversation}
+              style={{
+                width: 'auto',
+                minWidth: 'auto',
+                padding: '8px 16px'
+              }}
+            >
+              초기화
+            </button>
+          )}
+        </div>
       </div>
 
       {/* 채팅 메시지 목록 */}
