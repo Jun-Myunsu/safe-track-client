@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { speechService } from '../services/speechService'
 
 /**
  * AI 채팅 섹션 컴포넌트
@@ -9,14 +10,12 @@ const AIChatSection = ({ socket, userId, currentLocation }) => {
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isListening, setIsListening] = useState(false)
-  const [isSpeaking, setIsSpeaking] = useState(false)
   const [voiceEnabled, setVoiceEnabled] = useState(() => {
     const saved = localStorage.getItem('ai_voice_enabled')
-    return saved !== 'false'
+    return saved === 'true'
   })
   const messagesEndRef = useRef(null)
   const recognitionRef = useRef(null)
-  const synthRef = useRef(window.speechSynthesis)
 
   // 스크롤을 맨 아래로
   const scrollToBottom = () => {
@@ -66,14 +65,9 @@ const AIChatSection = ({ socket, userId, currentLocation }) => {
       }])
       setIsLoading(false)
       
-      // AI 응답 음성 출력 (음성 활성화 시에만)
-      if (voiceEnabled && synthRef.current && !synthRef.current.speaking) {
-        const utterance = new SpeechSynthesisUtterance(data.message)
-        utterance.lang = 'ko-KR'
-        utterance.rate = 1.0
-        utterance.onstart = () => setIsSpeaking(true)
-        utterance.onend = () => setIsSpeaking(false)
-        synthRef.current.speak(utterance)
+      // AI 응답 음성 출력 (AI 채팅 음성 설정이 ON일 때만)
+      if (voiceEnabled) {
+        speechService.speak(data.message)
       }
     }
 
@@ -96,7 +90,7 @@ const AIChatSection = ({ socket, userId, currentLocation }) => {
       socket.off('aiMessage', handleAIMessage)
       socket.off('error', handleAIError)
     }
-  }, [socket])
+  }, [socket, voiceEnabled])
 
   // 메시지 전송
   const sendMessage = () => {
@@ -150,22 +144,11 @@ const AIChatSection = ({ socket, userId, currentLocation }) => {
     }
   }
 
-  // 음성 출력 중지
-  const stopSpeaking = () => {
-    if (synthRef.current) {
-      synthRef.current.cancel()
-      setIsSpeaking(false)
-    }
-  }
-
-  // 음성 출력 토글
+  // AI 음성 출력 토글
   const toggleVoice = () => {
     const newValue = !voiceEnabled
     setVoiceEnabled(newValue)
     localStorage.setItem('ai_voice_enabled', newValue.toString())
-    if (!newValue && isSpeaking) {
-      stopSpeaking()
-    }
   }
 
   return (

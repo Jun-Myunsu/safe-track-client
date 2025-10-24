@@ -263,6 +263,7 @@ function App() {
                 socket={socket}
                 userId={auth.userId}
                 currentLocation={tracking.currentLocation}
+                selectedVoice={voice.selectedVoice}
               />
             )
           )}

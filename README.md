@@ -4,6 +4,8 @@
 
 ## 설계문서 및 PPT 자료는 ==> docs 폴더에 있음.
 
+## PPT Url : https://safe-track-f1ay2r7.gamma.site/
+
 ## 배포 url => https://safe-track-client.vercel.app
 
 ## 기술 스택
