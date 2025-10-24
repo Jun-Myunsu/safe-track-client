@@ -1,6 +1,8 @@
 import RadioPlayer from './RadioPlayer'
 import FakeCall from './FakeCall'
 import StoryBook from './StoryBook'
+import YouTubePlayer from './YouTubePlayer'
+import AdminControl from './AdminControl'
 import { speechService } from '../services/speechService'
 
 /**
@@ -15,7 +17,8 @@ const ProfileSection = ({
   availableVoices,
   handleVoiceToggle,
   handleVoiceChange,
-  handleLogout
+  handleLogout,
+  socket
 }) => {
   if (!showProfile) {
     return (
@@ -43,6 +46,8 @@ const ProfileSection = ({
           👤 {userId}
         </h3>
         <div style={{ display: 'flex', gap: '8px' }}>
+          <AdminControl userId={userId} socket={socket} />
+          <YouTubePlayer />
           <StoryBook />
           <RadioPlayer />
           <FakeCall />

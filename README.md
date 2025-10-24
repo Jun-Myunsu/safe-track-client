@@ -2,6 +2,10 @@
 
 실시간 위치 공유 및 안전 관리 웹 애플리케이션
 
+## 설계문서 및 PPT 자료는 ==> docs 폴더에 있음.
+
+## 배포 url => https://safe-track-client.vercel.app
+
 ## 기술 스택
 
 ### 프론트엔드
@@ -54,6 +58,8 @@ node server.js
 ```
 
 ## 배포
+
+https://safe-track-client.vercel.app/
 
 ### 프론트엔드 (Vercel)
 

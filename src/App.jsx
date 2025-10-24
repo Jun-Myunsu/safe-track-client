@@ -152,6 +152,7 @@ function App() {
                 handleVoiceToggle={voice.handleVoiceToggle}
                 handleVoiceChange={voice.handleVoiceChange}
                 handleLogout={handleLogout}
+                socket={socket}
               />
             )}
 
