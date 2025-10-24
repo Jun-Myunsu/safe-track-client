@@ -66,8 +66,23 @@ const AIChatSection = ({ socket, userId, currentLocation }) => {
       setIsLoading(false)
       
       // AI 응답 음성 출력 (AI 채팅 음성 설정이 ON일 때만)
-      if (voiceEnabled) {
-        speechService.speak(data.message)
+      if (voiceEnabled && 'speechSynthesis' in window) {
+        speechSynthesis.cancel()
+        const utterance = new SpeechSynthesisUtterance(data.message)
+        
+        // speechService에서 선택된 음성 사용
+        if (speechService.selectedVoice) {
+          utterance.voice = speechService.selectedVoice
+          utterance.lang = speechService.selectedVoice.lang
+        } else {
+          utterance.lang = 'ko-KR'
+        }
+        
+        utterance.rate = 1.0
+        utterance.pitch = 1.0
+        utterance.volume = 1.0
+        
+        speechSynthesis.speak(utterance)
       }
     }
 
@@ -149,6 +164,17 @@ const AIChatSection = ({ socket, userId, currentLocation }) => {
     const newValue = !voiceEnabled
     setVoiceEnabled(newValue)
     localStorage.setItem('ai_voice_enabled', newValue.toString())
+    
+    if (newValue && 'speechSynthesis' in window) {
+      const testUtterance = new SpeechSynthesisUtterance('AI 음성이 활성화되었습니다')
+      if (speechService.selectedVoice) {
+        testUtterance.voice = speechService.selectedVoice
+        testUtterance.lang = speechService.selectedVoice.lang
+      } else {
+        testUtterance.lang = 'ko-KR'
+      }
+      speechSynthesis.speak(testUtterance)
+    }
   }
 
   return (
