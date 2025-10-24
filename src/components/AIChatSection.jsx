@@ -306,18 +306,27 @@ const AIChatSection = ({ socket, userId, currentLocation }) => {
               right: '8px',
               top: '50%',
               transform: 'translateY(-50%)',
-              background: 'none',
+              background: isListening ? '#ff4444' : 'none',
               border: 'none',
               cursor: 'pointer',
               fontSize: '1.2rem',
-              padding: '4px',
-              color: isListening ? '#ff4444' : '#888888',
-              transition: 'color 0.2s'
+              padding: '6px',
+              borderRadius: '50%',
+              color: isListening ? '#ffffff' : '#888888',
+              transition: 'all 0.2s',
+              animation: isListening ? 'pulse 1s infinite' : 'none',
+              boxShadow: isListening ? '0 0 10px #ff4444' : 'none'
             }}
             title="음성 입력"
           >
             🎤
           </button>
+          <style>{`
+            @keyframes pulse {
+              0%, 100% { transform: translateY(-50%) scale(1); }
+              50% { transform: translateY(-50%) scale(1.1); }
+            }
+          `}</style>
         </div>
         <button
           className="btn btn-primary"
