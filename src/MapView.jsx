@@ -301,7 +301,7 @@ function MapView({ locations, currentLocation, currentUserId, isTracking, myLoca
             title="안전 팁 보기"
             style={{
               backgroundColor: dangerAnalysis.overallRiskLevel === 'high' ? 'rgba(255, 51, 51, 0.9)' :
-                             dangerAnalysis.overallRiskLevel === 'medium' ? 'rgba(255, 136, 0, 0.9)' : 'rgba(0, 255, 136, 0.9)'
+                             dangerAnalysis.overallRiskLevel === 'medium' ? 'rgba(255, 136, 0, 0.9)' : 'rgba(255, 100, 100, 0.85)'
             }}
           >
             💡
