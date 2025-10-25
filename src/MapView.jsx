@@ -196,13 +196,13 @@ function MapView({ locations, currentLocation, currentUserId, isTracking, myLoca
     }
   }, [showDangerZones, analyzeCurrentDanger]);
 
-  // 30초마다 위험 분석 업데이트 (추적 중일 때만)
+  // 5분마다 위험 분석 업데이트 (추적 중일 때만)
   useEffect(() => {
     if (!showDangerZones || !isTracking) return;
 
     const interval = setInterval(() => {
       analyzeCurrentDanger();
-    }, 30000); // 30초마다 업데이트
+    }, 300000); // 5분(300초)마다 업데이트
 
     return () => clearInterval(interval);
   }, [showDangerZones, isTracking, analyzeCurrentDanger])
