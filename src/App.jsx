@@ -175,7 +175,7 @@ function App() {
             {status && <div className="status success">{status}</div>}
           </div>
 
-          {share.receivedShares.length === 0 && (
+          {auth.isRegistered && share.receivedShares.length === 0 && (
             <div className="section">
               <LocationTracking
                 isRegistered={auth.isRegistered}

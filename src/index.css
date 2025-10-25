@@ -834,7 +834,8 @@ p {
 }
 
 .ai-chat-messages-container {
-  height: 280px;
+  min-height: 280px;
+  max-height: 60vh;
 }
 
 @media (max-width: 1024px) {
@@ -843,7 +844,8 @@ p {
   }
 
   .ai-chat-messages-container {
-    height: 350px;
+    min-height: 320px;
+    max-height: 70vh;
   }
 
   .map-section {
@@ -1078,6 +1080,25 @@ p {
   font-size: 1.1rem;
   line-height: 1.8;
   font-family: "아리따 돋움", "Arita-dotum-Medium", sans-serif;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+  background: #555555;
+  border-radius: 0;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+  background: #777777;
 }
 
 .modal-body p {
