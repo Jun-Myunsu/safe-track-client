@@ -90,6 +90,7 @@ function MapView({ locations, currentLocation, currentUserId, isTracking, myLoca
   const [dangerAnalysis, setDangerAnalysis] = useState(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [analysisError, setAnalysisError] = useState(null)
+  const [showSafetyTips, setShowSafetyTips] = useState(false)
   
   // 실제 응급시설 API 호출
   const fetchEmergencyFacilities = useCallback(async () => {
@@ -291,59 +292,111 @@ function MapView({ locations, currentLocation, currentUserId, isTracking, myLoca
         >
           🤖
         </button>
+
+        {/* 안전 팁 알림 버튼 */}
+        {showDangerZones && dangerAnalysis && (
+          <button
+            className={`map-type-btn ${showSafetyTips ? 'active' : ''}`}
+            onClick={() => setShowSafetyTips(!showSafetyTips)}
+            title="안전 팁 보기"
+            style={{
+              backgroundColor: dangerAnalysis.overallRiskLevel === 'high' ? 'rgba(255, 51, 51, 0.9)' :
+                             dangerAnalysis.overallRiskLevel === 'medium' ? 'rgba(255, 136, 0, 0.9)' : 'rgba(0, 255, 136, 0.9)'
+            }}
+          >
+            💡
+          </button>
+        )}
       </div>
 
-      {/* 안전 정보 패널 */}
-      {showDangerZones && dangerAnalysis && (
+      {/* 안전 팁 팝업 */}
+      {showDangerZones && dangerAnalysis && showSafetyTips && (
         <div style={{
           position: 'absolute',
           top: '10px',
-          left: '10px',
+          right: '70px',
           zIndex: 1000,
-          backgroundColor: 'rgba(42, 42, 42, 0.95)',
-          padding: '12px',
+          backgroundColor: 'rgba(42, 42, 42, 0.98)',
+          padding: '16px',
           borderRadius: '8px',
-          border: '1px solid #555',
-          maxWidth: '300px',
-          maxHeight: '200px',
+          border: '2px solid ' + (dangerAnalysis.overallRiskLevel === 'high' ? '#ff3333' :
+                                  dangerAnalysis.overallRiskLevel === 'medium' ? '#ff8800' : '#00ff88'),
+          maxWidth: '320px',
+          maxHeight: '400px',
           overflowY: 'auto',
-          boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
+          boxShadow: '0 6px 12px rgba(0,0,0,0.5)'
         }}>
           <div style={{
-            marginBottom: '8px',
-            fontSize: '1rem',
-            fontWeight: 'bold',
-            color: dangerAnalysis.overallRiskLevel === 'high' ? '#ff3333' :
-                   dangerAnalysis.overallRiskLevel === 'medium' ? '#ff8800' : '#00ff88'
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '12px'
           }}>
-            {isAnalyzing ? '🔄 분석 중...' :
-             dangerAnalysis.overallRiskLevel === 'high' ? '⚠️ 높은 주의 필요' :
-             dangerAnalysis.overallRiskLevel === 'medium' ? '⚡ 주의 필요' : '✅ 안전'}
+            <div style={{
+              fontSize: '1.1rem',
+              fontWeight: 'bold',
+              color: dangerAnalysis.overallRiskLevel === 'high' ? '#ff3333' :
+                     dangerAnalysis.overallRiskLevel === 'medium' ? '#ff8800' : '#00ff88'
+            }}>
+              {isAnalyzing ? '🔄 분석 중...' :
+               dangerAnalysis.overallRiskLevel === 'high' ? '⚠️ 높은 주의 필요' :
+               dangerAnalysis.overallRiskLevel === 'medium' ? '⚡ 주의 필요' : '✅ 안전'}
+            </div>
+            <button
+              onClick={() => setShowSafetyTips(false)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#aaa',
+                fontSize: '1.2rem',
+                cursor: 'pointer',
+                padding: '0 4px'
+              }}
+            >
+              ✕
+            </button>
           </div>
+
           {analysisError && (
             <div style={{
               fontSize: '0.75rem',
               color: '#ffaa00',
               backgroundColor: 'rgba(255, 170, 0, 0.1)',
-              padding: '4px 8px',
+              padding: '6px 10px',
               borderRadius: '4px',
-              marginBottom: '8px',
+              marginBottom: '12px',
               border: '1px solid rgba(255, 170, 0, 0.3)'
             }}>
               💡 {analysisError}
             </div>
           )}
-          <div style={{ fontSize: '0.85rem', color: '#cccccc' }}>
-            <strong>안전 팁:</strong>
-            <ul style={{ margin: '4px 0', paddingLeft: '20px', listStyle: 'none' }}>
-              {dangerAnalysis.safetyTips?.slice(0, 3).map((tip, idx) => (
-                <li key={idx} style={{ marginBottom: '4px' }}>• {tip}</li>
+
+          <div style={{ fontSize: '0.9rem', color: '#cccccc' }}>
+            <strong style={{ color: '#fff', fontSize: '1rem' }}>안전 팁</strong>
+            <ul style={{ margin: '8px 0', paddingLeft: '20px', listStyle: 'none' }}>
+              {dangerAnalysis.safetyTips?.map((tip, idx) => (
+                <li key={idx} style={{
+                  marginBottom: '8px',
+                  lineHeight: '1.5',
+                  paddingLeft: '8px',
+                  borderLeft: '3px solid ' + (dangerAnalysis.overallRiskLevel === 'high' ? '#ff3333' :
+                                              dangerAnalysis.overallRiskLevel === 'medium' ? '#ff8800' : '#00ff88')
+                }}>
+                  • {tip}
+                </li>
               ))}
             </ul>
           </div>
+
           {dangerAnalysis.dangerZones?.length > 0 && (
-            <div style={{ fontSize: '0.8rem', color: '#aaa', marginTop: '6px' }}>
-              📍 {dangerAnalysis.dangerZones.length}개 주의 지역 표시됨
+            <div style={{
+              fontSize: '0.85rem',
+              color: '#aaa',
+              marginTop: '12px',
+              paddingTop: '12px',
+              borderTop: '1px solid #555'
+            }}>
+              📍 {dangerAnalysis.dangerZones.length}개 주의 지역이 지도에 표시되었습니다
             </div>
           )}
         </div>
