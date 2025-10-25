@@ -4,7 +4,9 @@
 
 ## 설계문서 및 PPT 자료는 ==> docs 폴더에 있음.
 
-## PPT Url : https://safe-track-f1ay2r7.gamma.site/
+## PPT url : https://safe-track-f1ay2r7.gamma.site/
+
+## 노션 url : https://www.notion.so/goormict/Jun-AIDEA-CAMP-Mini-2907acfd03f780bfbdfcf24a8a1068fe
 
 ## 배포 url => https://safe-track-client.vercel.app
 
