@@ -24,6 +24,52 @@ const initializeOpenAI = () => {
 };
 
 /**
+ * 기본 안전 정보 생성 (API 키 없을 때 또는 에러 시)
+ * @param {Object} currentLocation - 현재 위치
+ * @param {Date} timestamp - 현재 시간
+ * @param {Object} emergencyFacilities - 응급 시설 정보
+ * @returns {Object} 기본 안전 정보
+ */
+const generateDefaultSafetyInfo = (currentLocation, timestamp, emergencyFacilities) => {
+  const hour = timestamp.getHours();
+  const isNight = hour >= 22 || hour < 6;
+  const hasEmergencyFacilities =
+    (emergencyFacilities.hospitals?.length || 0) +
+    (emergencyFacilities.police?.length || 0) +
+    (emergencyFacilities.stations?.length || 0) > 0;
+
+  const safetyTips = [
+    '주변을 주의 깊게 살피세요',
+    isNight ? '밝은 곳으로 이동하고 어두운 길은 피하세요' : '사람이 많은 길로 이동하세요',
+    '비상시 112 (경찰) 또는 119 (구급)에 연락하세요',
+    hasEmergencyFacilities ? '주변 응급시설 위치를 확인하세요 (🚨 버튼)' : '가까운 안전한 장소를 파악하세요',
+    '가족이나 친구에게 현재 위치를 공유하세요'
+  ];
+
+  // 현재 위치 기준으로 가상의 주의 지역 생성 (교육용)
+  const dangerZones = [
+    {
+      lat: currentLocation.lat + 0.002,
+      lng: currentLocation.lng + 0.002,
+      radius: 300,
+      riskLevel: 'low',
+      reason: isNight ? '야간 시간대로 가시성이 낮을 수 있습니다' : '일반적인 주의가 필요합니다',
+      recommendations: [
+        '주변을 잘 살피며 이동하세요',
+        isNight ? '밝은 곳으로 이동하세요' : '사람이 많은 곳으로 이동하세요'
+      ]
+    }
+  ];
+
+  return {
+    overallRiskLevel: isNight ? 'medium' : 'low',
+    dangerZones,
+    safetyTips,
+    analysisTimestamp: timestamp.toISOString()
+  };
+};
+
+/**
  * 위치 데이터를 기반으로 위험 지역 예측
  * @param {Object} params - 예측에 필요한 파라미터
  * @param {Array} params.locationHistory - 위치 이동 기록
@@ -41,7 +87,15 @@ export const analyzeDangerZones = async ({
   emergencyFacilities = { hospitals: [], police: [], stations: [] }
 }) => {
   if (!initializeOpenAI()) {
-    throw new Error('OpenAI API is not initialized');
+    console.warn('⚠️ OpenAI API key not found. Please add VITE_OPENAI_API_KEY to your .env file.');
+    console.info('Returning default safety information instead.');
+
+    // API 키 없이도 기본 안전 정보 제공
+    return {
+      success: false,
+      error: 'OpenAI API key not configured',
+      data: generateDefaultSafetyInfo(currentLocation, timestamp, emergencyFacilities)
+    };
   }
 
   try {
@@ -152,16 +206,7 @@ export const analyzeDangerZones = async ({
     return {
       success: false,
       error: error.message,
-      data: {
-        overallRiskLevel: 'low',
-        dangerZones: [],
-        safetyTips: [
-          '주변을 주의 깊게 살피세요',
-          '어두운 곳은 피하고 밝은 곳으로 이동하세요',
-          '비상시 112 또는 119에 연락하세요'
-        ],
-        analysisTimestamp: timestamp.toISOString()
-      }
+      data: generateDefaultSafetyInfo(currentLocation, timestamp, emergencyFacilities)
     };
   }
 };

@@ -89,6 +89,7 @@ function MapView({ locations, currentLocation, currentUserId, isTracking, myLoca
   const [showDangerZones, setShowDangerZones] = useState(false)
   const [dangerAnalysis, setDangerAnalysis] = useState(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [analysisError, setAnalysisError] = useState(null)
   
   // 실제 응급시설 API 호출
   const fetchEmergencyFacilities = useCallback(async () => {
@@ -161,6 +162,7 @@ function MapView({ locations, currentLocation, currentUserId, isTracking, myLoca
 
       if (result.success) {
         setDangerAnalysis(result.data);
+        setAnalysisError(null);
 
         // 음성 알림 (전체 위험도가 medium 이상일 때)
         if (result.data.overallRiskLevel === 'high') {
@@ -169,7 +171,15 @@ function MapView({ locations, currentLocation, currentUserId, isTracking, myLoca
           console.log('⚡ 중간 위험도 감지:', result.data);
         }
       } else {
-        console.warn('위험 분석 실패:', result.error);
+        // API 키 없거나 에러 발생 시에도 기본 정보 표시
+        if (result.error === 'OpenAI API key not configured') {
+          console.warn('💡 OpenAI API 키가 설정되지 않았습니다. 기본 안전 정보를 표시합니다.');
+          console.info('API 키 설정 방법: .env 파일에 VITE_OPENAI_API_KEY=your_key 추가');
+          setAnalysisError('API 키 없음 (기본 정보 사용)');
+        } else {
+          console.warn('위험 분석 실패:', result.error);
+          setAnalysisError(result.error);
+        }
         setDangerAnalysis(result.data); // 기본 안전 정보 사용
       }
     } catch (error) {
@@ -310,6 +320,19 @@ function MapView({ locations, currentLocation, currentUserId, isTracking, myLoca
              dangerAnalysis.overallRiskLevel === 'high' ? '⚠️ 높은 주의 필요' :
              dangerAnalysis.overallRiskLevel === 'medium' ? '⚡ 주의 필요' : '✅ 안전'}
           </div>
+          {analysisError && (
+            <div style={{
+              fontSize: '0.75rem',
+              color: '#ffaa00',
+              backgroundColor: 'rgba(255, 170, 0, 0.1)',
+              padding: '4px 8px',
+              borderRadius: '4px',
+              marginBottom: '8px',
+              border: '1px solid rgba(255, 170, 0, 0.3)'
+            }}>
+              💡 {analysisError}
+            </div>
+          )}
           <div style={{ fontSize: '0.85rem', color: '#cccccc' }}>
             <strong>안전 팁:</strong>
             <ul style={{ margin: '4px 0', paddingLeft: '20px', listStyle: 'none' }}>
