@@ -552,6 +552,11 @@ body::before {
   box-shadow: 4px 4px 0px #000000;
 }
 
+/* Leaflet attribution 숨기기 */
+.leaflet-control-attribution {
+  display: none !important;
+}
+
 @media (max-width: 1024px) {
   .map-container {
     height: 300px;
