@@ -68,12 +68,9 @@ function StuckUsersPanel() {
           onClick={fetchStuckUsers}
           disabled={loading}
           style={{ 
-            minWidth: "50px",
-            padding: "10px",
-            fontSize: "1.2rem",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center"
+            flex: "0 0 auto",
+            width: "auto",
+            minWidth: "unset"
           }}
           title="새로고침"
         >
