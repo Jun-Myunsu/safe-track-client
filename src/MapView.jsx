@@ -348,7 +348,7 @@ function MapView({ locations, currentLocation, currentUserId, isTracking, myLoca
           position: 'absolute',
           top: '10px',
           right: '70px',
-          zIndex: 1000,
+          zIndex: 10000,
           backgroundColor: 'rgba(42, 42, 42, 0.98)',
           padding: '16px',
           borderRadius: '8px',
