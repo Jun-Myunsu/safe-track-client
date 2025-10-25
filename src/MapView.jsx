@@ -255,25 +255,46 @@ function MapView({ locations, currentLocation, currentUserId, isTracking, myLoca
         position: 'absolute',
         bottom: '10px',
         left: '10px',
-        zIndex: 1000
+        zIndex: 999
       }}>
-        <Compass 
-          onHeadingChange={(heading) => {
-            if (isMapRotating && mapInstance) {
-              const container = mapInstance.getContainer()
-              container.style.transform = `rotate(${-heading}deg)`
-            }
-          }}
-          onRotateMap={(rotating) => {
-            setIsMapRotating(rotating)
-            if (!rotating && mapInstance) {
-              const container = mapInstance.getContainer()
-              container.style.transform = 'rotate(0deg)'
-            }
-          }}
-        />
+        <Compass />
       </div>
       
+      {/* AI 위험 분석 버튼 (지도 버튼 왼쪽) */}
+      <div style={{
+        position: 'absolute',
+        top: '10px',
+        right: '46px',
+        zIndex: 1000,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '6px'
+      }}>
+        <button
+          className={`map-type-btn ${showDangerZones ? 'active' : ''}`}
+          onClick={() => setShowDangerZones(!showDangerZones)}
+          disabled={!isTracking}
+          title={isTracking ? 'AI 위험 분석 토글' : '위치 추적을 시작하세요'}
+        >
+          🤖
+        </button>
+
+        {/* 안전 팁 알림 버튼 */}
+        {showDangerZones && dangerAnalysis && (
+          <button
+            className={`map-type-btn ${showSafetyTips ? 'active' : ''}`}
+            onClick={() => setShowSafetyTips(!showSafetyTips)}
+            title="안전 팁 보기"
+            style={{
+              backgroundColor: dangerAnalysis.overallRiskLevel === 'high' ? 'rgba(255, 51, 51, 0.9)' :
+                             dangerAnalysis.overallRiskLevel === 'medium' ? 'rgba(255, 136, 0, 0.9)' : 'rgba(255, 100, 100, 0.85)'
+            }}
+          >
+            💡
+          </button>
+        )}
+      </div>
+
       <div style={{
         position: 'absolute',
         top: '10px',
@@ -319,29 +340,6 @@ function MapView({ locations, currentLocation, currentUserId, isTracking, myLoca
         >
           🚗
         </button>
-        <button
-          className={`map-type-btn ${showDangerZones ? 'active' : ''}`}
-          onClick={() => setShowDangerZones(!showDangerZones)}
-          disabled={!isTracking}
-          title={isTracking ? 'AI 위험 분석 토글' : '위치 추적을 시작하세요'}
-        >
-          🤖
-        </button>
-
-        {/* 안전 팁 알림 버튼 */}
-        {showDangerZones && dangerAnalysis && (
-          <button
-            className={`map-type-btn ${showSafetyTips ? 'active' : ''}`}
-            onClick={() => setShowSafetyTips(!showSafetyTips)}
-            title="안전 팁 보기"
-            style={{
-              backgroundColor: dangerAnalysis.overallRiskLevel === 'high' ? 'rgba(255, 51, 51, 0.9)' :
-                             dangerAnalysis.overallRiskLevel === 'medium' ? 'rgba(255, 136, 0, 0.9)' : 'rgba(255, 100, 100, 0.85)'
-            }}
-          >
-            💡
-          </button>
-        )}
       </div>
 
       {/* 안전 팁 팝업 */}

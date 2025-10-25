@@ -592,7 +592,7 @@ body::before {
 
 .btn-group {
   display: flex;
-  gap: 12px;
+  gap: 4px;
   flex-wrap: wrap;
 }
 
@@ -607,7 +607,7 @@ body::before {
   .btn-group {
     display: flex;
     flex-direction: row;
-    gap: 4px;
+    gap: 2px;
     flex-wrap: wrap;
   }
 
@@ -749,7 +749,7 @@ p {
   }
 
   .btn-group {
-    gap: 3px;
+    gap: 2px;
   }
 
   .btn-group .btn {
