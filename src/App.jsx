@@ -259,6 +259,7 @@ function App() {
             userPaths={userPaths}
             isTracking={tracking.isTracking || tracking.isSimulating}
             myLocationHistory={myLocationHistory}
+            isRegistered={auth.isRegistered}
           />
 
           {/* 연결된 사용자가 있으면 일반 채팅, 없으면 AI 채팅 */}

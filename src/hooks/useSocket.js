@@ -69,7 +69,7 @@ export function useSocket(handlers) {
         }
       },
       locationReceived: (data) => {
-        handlers.setLocations(prev => [data, ...prev.slice(0, 9)])
+        handlers.setLocations(prev => [...prev, data])
         if (data.path && data.path.length > 1) {
           handlers.setUserPaths(prev => {
             const newPaths = new Map(prev)
@@ -121,8 +121,16 @@ export function useSocket(handlers) {
       locationShareStopped: (data) => {
         handlers.setStatus(`🚫 ${data.fromName}이 위치 공유를 중지했습니다`)
         setTimeout(() => handlers.setStatus(''), 3000)
-        handlers.setReceivedShares(prev => prev.filter(user => user.id !== data.fromUserId))
-        handlers.setSharedUsers(prev => prev.filter(user => user.id !== data.fromUserId))
+        handlers.setReceivedShares(prev => {
+          const updated = prev.filter(user => user.id !== data.fromUserId)
+          localStorage.setItem('safetrack_receivedShares', JSON.stringify(updated))
+          return updated
+        })
+        handlers.setSharedUsers(prev => {
+          const updated = prev.filter(user => user.id !== data.fromUserId)
+          localStorage.setItem('safetrack_sharedUsers', JSON.stringify(updated))
+          return updated
+        })
         handlers.setChatMessages([])
         // 음성 알림
         speechService.notifyLocationShareStopped(data.fromName)

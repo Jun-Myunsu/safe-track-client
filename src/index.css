@@ -417,10 +417,28 @@ body::before {
   color: #555555;
   cursor: not-allowed;
   box-shadow: 2px 2px 0px #000000;
+  opacity: 0.4;
 }
 
 .btn:disabled::before {
   display: none;
+}
+
+.map-type-btn:disabled {
+  background: #1a1a1a;
+  border-color: #2a2a2a;
+  color: #444444;
+  cursor: not-allowed;
+  box-shadow: 1px 1px 0px #000000;
+  opacity: 0.3;
+}
+
+.map-type-btn:disabled:hover {
+  background: #1a1a1a;
+  border-color: #2a2a2a;
+  color: #444444;
+  box-shadow: 1px 1px 0px #000000;
+  transform: none;
 }
 
 .status {

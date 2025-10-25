@@ -59,7 +59,11 @@ export const useLocationShare = (socket, setStatus, stopTracking, isTracking, is
     if (!socket) return
 
     socket.emit('stopLocationShare', { targetUserId })
-    setSharedUsers(prev => prev.filter(user => user.id !== targetUserId))
+    setSharedUsers(prev => {
+      const updated = prev.filter(user => user.id !== targetUserId)
+      localStorage.setItem(STORAGE_KEYS.SHARED_USERS, JSON.stringify(updated))
+      return updated
+    })
 
     setStatus(SUCCESS_MESSAGES.SHARE_STOPPED(targetUserId))
     setTimeout(() => setStatus(''), TIMEOUTS.STATUS_MESSAGE)
@@ -74,9 +78,17 @@ export const useLocationShare = (socket, setStatus, stopTracking, isTracking, is
     socket.emit('stopReceivingShare', { fromUserId })
     socket.emit('stopLocationShare', { targetUserId: fromUserId })
 
-    setReceivedShares(prev => prev.filter(user => user.id !== fromUserId))
+    setReceivedShares(prev => {
+      const updated = prev.filter(user => user.id !== fromUserId)
+      localStorage.setItem(STORAGE_KEYS.RECEIVED_SHARES, JSON.stringify(updated))
+      return updated
+    })
     setLocations(prev => prev.filter(loc => loc.userId !== fromUserId))
-    setSharedUsers(prev => prev.filter(user => user.id !== fromUserId))
+    setSharedUsers(prev => {
+      const updated = prev.filter(user => user.id !== fromUserId)
+      localStorage.setItem(STORAGE_KEYS.SHARED_USERS, JSON.stringify(updated))
+      return updated
+    })
 
     setStatus(SUCCESS_MESSAGES.SHARE_FULLY_STOPPED(fromUserId))
     setTimeout(() => setStatus(''), TIMEOUTS.STATUS_MESSAGE)
