@@ -117,6 +117,9 @@ export const useLocationTracking = (socket, userId, setLocations) => {
     saveAppState.isSimulating('false')
     localStorage.removeItem(STORAGE_KEYS.CURRENT_LOCATION)
 
+    // 위험도 예측 초기화 이벤트 발생
+    window.dispatchEvent(new CustomEvent('clearDangerAnalysis'))
+
     speechService.notifyTrackingStopped()
   }, [socket, userId, setLocations])
 

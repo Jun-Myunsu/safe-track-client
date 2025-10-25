@@ -42,8 +42,14 @@ const createOtherUserMarkerIcon = () => L.divIcon({
 })
 
 // 지도 중심 업데이트 컴포넌트
-function MapUpdater({ currentLocation, locations, currentUserId, setMapCenter, setMapBounds }) {
+function MapUpdater({ currentLocation, locations, currentUserId, setMapCenter, setMapBounds, setMapInstance }) {
   const map = useMap()
+  
+  useEffect(() => {
+    if (setMapInstance) {
+      setMapInstance(map)
+    }
+  }, [map, setMapInstance])
   
   useEffect(() => {
     const otherUserLocations = locations.filter(loc => loc.userId !== currentUserId)
@@ -91,6 +97,8 @@ function MapView({ locations, currentLocation, currentUserId, isTracking, myLoca
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [analysisError, setAnalysisError] = useState(null)
   const [showSafetyTips, setShowSafetyTips] = useState(false)
+  const [mapInstance, setMapInstance] = useState(null)
+  const [isMapRotating, setIsMapRotating] = useState(false)
   
   // 실제 응급시설 API 호출
   const fetchEmergencyFacilities = useCallback(async () => {
@@ -197,6 +205,19 @@ function MapView({ locations, currentLocation, currentUserId, isTracking, myLoca
     }
   }, [showDangerZones]); // analyzeCurrentDanger 의존성 제거하여 위치 변경 시 재실행 방지
 
+  // 위치 추적 중지 시 위험도 예측 초기화
+  useEffect(() => {
+    const handleClearDangerAnalysis = () => {
+      setDangerAnalysis(null)
+      setShowDangerZones(false)
+      setShowSafetyTips(false)
+      setAnalysisError(null)
+    }
+
+    window.addEventListener('clearDangerAnalysis', handleClearDangerAnalysis)
+    return () => window.removeEventListener('clearDangerAnalysis', handleClearDangerAnalysis)
+  }, [])
+
   // 5분마다 위험 분석 업데이트 (추적 중일 때만)
   useEffect(() => {
     if (!showDangerZones || !isTracking) return;
@@ -236,7 +257,21 @@ function MapView({ locations, currentLocation, currentUserId, isTracking, myLoca
         left: '10px',
         zIndex: 1000
       }}>
-        <Compass />
+        <Compass 
+          onHeadingChange={(heading) => {
+            if (isMapRotating && mapInstance) {
+              const container = mapInstance.getContainer()
+              container.style.transform = `rotate(${-heading}deg)`
+            }
+          }}
+          onRotateMap={(rotating) => {
+            setIsMapRotating(rotating)
+            if (!rotating && mapInstance) {
+              const container = mapInstance.getContainer()
+              container.style.transform = 'rotate(0deg)'
+            }
+          }}
+        />
       </div>
       
       <div style={{
@@ -406,7 +441,14 @@ function MapView({ locations, currentLocation, currentUserId, isTracking, myLoca
         zoom={14}
         className="map-container"
       >
-        <MapUpdater currentLocation={currentLocation} locations={locations} currentUserId={currentUserId} setMapCenter={setMapCenter} setMapBounds={setMapBounds} />
+        <MapUpdater 
+          currentLocation={currentLocation} 
+          locations={locations} 
+          currentUserId={currentUserId} 
+          setMapCenter={setMapCenter} 
+          setMapBounds={setMapBounds}
+          setMapInstance={setMapInstance}
+        />
         <TileLayer
           key={mapType}
           url={mapTypes[mapType].url}
