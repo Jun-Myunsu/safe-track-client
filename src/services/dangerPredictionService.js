@@ -112,12 +112,13 @@ export const analyzeDangerZones = async ({
 
 /**
  * 위험 지역 색상 가져오기
- * @param {string} riskLevel - 위험도 (low, medium, high)
+ * @param {string} riskLevel - 위험도 (safe, low, medium, high)
  * @returns {string} 색상 코드
  */
 export const getDangerZoneColor = (riskLevel) => {
   const colors = {
-    low: 'rgba(255, 255, 0, 0.2)',    // 노란색 (주의)
+    safe: 'rgba(0, 255, 136, 0.2)',    // 초록색 (안전)
+    low: 'rgba(255, 255, 0, 0.2)',     // 노란색 (주의)
     medium: 'rgba(255, 165, 0, 0.3)',  // 오렌지색 (경고)
     high: 'rgba(255, 0, 0, 0.4)'       // 빨간색 (위험)
   };
@@ -126,14 +127,15 @@ export const getDangerZoneColor = (riskLevel) => {
 
 /**
  * 위험 지역 테두리 색상 가져오기
- * @param {string} riskLevel - 위험도 (low, medium, high)
+ * @param {string} riskLevel - 위험도 (safe, low, medium, high)
  * @returns {string} 색상 코드
  */
 export const getDangerZoneBorderColor = (riskLevel) => {
   const colors = {
-    low: 'rgba(255, 255, 0, 0.6)',
-    medium: 'rgba(255, 165, 0, 0.7)',
-    high: 'rgba(255, 0, 0, 0.8)'
+    safe: 'rgba(0, 255, 136, 0.7)',    // 초록색 (안전)
+    low: 'rgba(255, 255, 0, 0.6)',     // 노란색 (주의)
+    medium: 'rgba(255, 165, 0, 0.7)',  // 오렌지색 (경고)
+    high: 'rgba(255, 0, 0, 0.8)'       // 빨간색 (위험)
   };
   return colors[riskLevel] || colors.low;
 };
