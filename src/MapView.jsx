@@ -93,7 +93,10 @@ function MapView({ locations, currentLocation, currentUserId, isTracking, myLoca
   const [showSecurityFacilities, setShowSecurityFacilities] = useState(true)
   const [showEmergencyBells, setShowEmergencyBells] = useState(true)
   const [showWomenSafety, setShowWomenSafety] = useState(false)
-  const [showConvenienceStores, setShowConvenienceStores] = useState(false)
+
+
+  const [showChildCrimeZones, setShowChildCrimeZones] = useState(false)
+  const [showMurderStats, setShowMurderStats] = useState(true)
   const [mapCenter, setMapCenter] = useState(center)
   const [mapBounds, setMapBounds] = useState(null)
   const [emergencyLocations, setEmergencyLocations] = useState({ hospitals: [], police: [], stations: [] })
@@ -232,13 +235,13 @@ function MapView({ locations, currentLocation, currentUserId, isTracking, myLoca
     return () => window.removeEventListener('clearDangerAnalysis', handleClearDangerAnalysis)
   }, [])
 
-  // 5분마다 위험 분석 업데이트 (추적 중일 때만)
+  // 10분마다 위험 분석 업데이트 (추적 중일 때만)
   useEffect(() => {
     if (!showDangerZones || !isTracking) return;
 
     const interval = setInterval(() => {
       analyzeCurrentDanger();
-    }, 300000); // 5분(300초)마다 업데이트
+    }, 600000); // 10분(600초)마다 업데이트
 
     return () => clearInterval(interval);
   }, [showDangerZones, isTracking, analyzeCurrentDanger])
@@ -317,13 +320,22 @@ function MapView({ locations, currentLocation, currentUserId, isTracking, myLoca
           🕵️
         </button>
 
-        {/* 편의점 버튼 */}
+        {/* 어린이대상범죄주의구간 버튼 */}
         <button
-          className={`map-type-btn ${showConvenienceStores ? 'active' : ''}`}
-          onClick={() => setShowConvenienceStores(!showConvenienceStores)}
-          title="편의점 위치"
+          className={`map-type-btn ${showChildCrimeZones ? 'active' : ''}`}
+          onClick={() => setShowChildCrimeZones(!showChildCrimeZones)}
+          title="어린이대상범죄주의구간"
         >
-          🏪
+          👶
+        </button>
+
+        {/* 치안사고통계(살인) 버튼 */}
+        <button
+          className={`map-type-btn ${showMurderStats ? 'active' : ''}`}
+          onClick={() => setShowMurderStats(!showMurderStats)}
+          title="치안사고통계(살인)"
+        >
+          🔪
         </button>
       </div>
 
@@ -550,17 +562,43 @@ function MapView({ locations, currentLocation, currentUserId, isTracking, myLoca
           />
         )}
 
-        {/* 편의점 WMS 레이어 */}
-        {showConvenienceStores && (
+        {/* 약자보호시설 WMS 레이어 (항상 표시) */}
+        <WMSTileLayer
+          key={`protection-facilities-${mapType}`}
+          url={`http://www.safemap.go.kr/openApiService/wms/getLayerData.do?apikey=${import.meta.env.VITE_SAFEMAP_TOKEN}`}
+          layers="A2SM_CMMNPOI"
+          styles="A2SM_CMMNPOI_04"
+          format="image/png"
+          transparent={true}
+          attribution="안전지도 약자보호시설"
+          opacity={0.8}
+        />
+
+        {/* 어린이대상범죄주의구간 WMS 레이어 */}
+        {showChildCrimeZones && (
           <WMSTileLayer
-            key={`convenience-stores-${mapType}`}
+            key={`child-crime-zones-${mapType}`}
             url={`http://www.safemap.go.kr/openApiService/wms/getLayerData.do?apikey=${import.meta.env.VITE_SAFEMAP_TOKEN}`}
-            layers="A2SM_CMMNPOI"
-            styles="A2SM_CMMNPOI_08"
+            layers="A2SM_ODBLRCRMNLHSPOT_KID"
+            styles="A2SM_OdblrCrmnlHspot_Kid"
             format="image/png"
             transparent={true}
-            attribution="안전지도 편의점"
-            opacity={0.8}
+            attribution="안전지도 어린이대상범죄주의구간"
+            opacity={0.6}
+          />
+        )}
+
+        {/* 치안사고통계(살인) WMS 레이어 */}
+        {showMurderStats && (
+          <WMSTileLayer
+            key={`murder-stats-${mapType}`}
+            url={`http://www.safemap.go.kr/openApiService/wms/getLayerData.do?apikey=${import.meta.env.VITE_SAFEMAP_TOKEN}`}
+            layers="A2SM_CRMNLSTATS"
+            styles="A2SM_CrmnlStats_Murder"
+            format="image/png"
+            transparent={true}
+            attribution="안전지도 치안사고통계(살인)"
+            opacity={0.7}
           />
         )}
       

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import MapView from "./MapView";
 import AuthForm from "./components/AuthForm";
 import LocationTracking from "./components/LocationTracking";
@@ -10,6 +10,7 @@ import ReceivedShares from "./components/ReceivedShares";
 import UserSearch from "./components/UserSearch";
 import FriendsList from "./components/FriendsList";
 import ProfileSection from "./components/ProfileSection";
+import StuckUsersPanel from "./components/StuckUsersPanel";
 import { useSocket } from "./hooks/useSocket";
 import { useAuth } from "./hooks/useAuth";
 import { useLocationTracking } from "./hooks/useLocationTracking";
@@ -59,6 +60,11 @@ function App() {
   );
   const voice = useVoiceSettings();
 
+  const myLocationHistory = useMemo(() => 
+    locations.filter((loc) => loc.userId === auth.userId),
+    [locations, auth.userId]
+  );
+
   // 위치 공유 중지 시 채팅 메시지 초기화를 위한 래퍼 함수
   const handleStopLocationShare = (targetUserId) => {
     share.stopLocationShare(targetUserId);
@@ -90,6 +96,11 @@ function App() {
       pushNotificationService.requestPermission();
     }
   }, [auth.isRegistered]);
+
+  // 스크롤 상단 고정
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   // useSocket 호출
   useSocket({
@@ -127,6 +138,10 @@ function App() {
     <div className="container">
       <div className="content-grid">
         <div className="sidebar">
+          {auth.userId === 'msjun' && auth.isRegistered && (
+            <StuckUsersPanel />
+          )}
+
           <div className="section">
             {isConnecting ? (
               <div className="status">🔄 서버 연결 중...</div>
@@ -243,9 +258,7 @@ function App() {
             currentUserId={auth.userId}
             userPaths={userPaths}
             isTracking={tracking.isTracking || tracking.isSimulating}
-            myLocationHistory={locations.filter(
-              (loc) => loc.userId === auth.userId
-            )}
+            myLocationHistory={myLocationHistory}
           />
 
           {/* 연결된 사용자가 있으면 일반 채팅, 없으면 AI 채팅 */}
