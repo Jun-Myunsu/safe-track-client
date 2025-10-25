@@ -1,4 +1,4 @@
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, WMSTileLayer, Marker, Popup, useMap } from 'react-leaflet'
 import { useEffect, useState, useMemo, useCallback } from 'react'
 import L from 'leaflet'
 import Compass from './components/Compass'
@@ -87,8 +87,13 @@ function MapView({ locations, currentLocation, currentUserId, isTracking, myLoca
   // 기본 중심점 (광주 시청)
   const center = [35.1595, 126.8526]
   const [mapType, setMapType] = useState('street')
-  const [showEmergency, setShowEmergency] = useState(false)
+  const [showEmergency, setShowEmergency] = useState(true)
   const [showTraffic, setShowTraffic] = useState(true)
+  const [showCrimeZones, setShowCrimeZones] = useState(true)
+  const [showSecurityFacilities, setShowSecurityFacilities] = useState(true)
+  const [showEmergencyBells, setShowEmergencyBells] = useState(true)
+  const [showWomenSafety, setShowWomenSafety] = useState(false)
+  const [showConvenienceStores, setShowConvenienceStores] = useState(false)
   const [mapCenter, setMapCenter] = useState(center)
   const [mapBounds, setMapBounds] = useState(null)
   const [emergencyLocations, setEmergencyLocations] = useState({ hospitals: [], police: [], stations: [] })
@@ -129,7 +134,12 @@ function MapView({ locations, currentLocation, currentUserId, isTracking, myLoca
             const facility = {
               name: element.tags.name || '이름 없음',
               lat: element.lat,
-              lng: element.lon
+              lng: element.lon,
+              address: element.tags['addr:full'] || element.tags['addr:street'] || '주소 정보 없음',
+              phone: element.tags.phone || element.tags['contact:phone'] || '전화번호 없음',
+              emergency: element.tags.emergency || '',
+              operator: element.tags.operator || '',
+              opening_hours: element.tags.opening_hours || '운영시간 정보 없음'
             }
             
             if (element.tags.amenity === 'hospital') {
@@ -151,7 +161,7 @@ function MapView({ locations, currentLocation, currentUserId, isTracking, myLoca
   
   useEffect(() => {
     fetchEmergencyFacilities()
-  }, [fetchEmergencyFacilities])
+  }, [fetchEmergencyFacilities, mapType])
 
   // AI 위험 지역 분석
   const analyzeCurrentDanger = useCallback(async () => {
@@ -166,7 +176,11 @@ function MapView({ locations, currentLocation, currentUserId, isTracking, myLoca
         locationHistory: myLocationHistory || [],
         currentLocation,
         timestamp: new Date(),
-        emergencyFacilities: emergencyLocations
+        emergencyFacilities: emergencyLocations,
+        hasCrimeZoneData: showCrimeZones,
+        hasSecurityFacilities: showSecurityFacilities,
+        hasEmergencyBells: showEmergencyBells,
+        hasWomenSafetyData: showWomenSafety
       });
 
       if (result.success) {
@@ -293,6 +307,24 @@ function MapView({ locations, currentLocation, currentUserId, isTracking, myLoca
             💡
           </button>
         )}
+
+        {/* 여성밤길치안안전 버튼 */}
+        <button
+          className={`map-type-btn ${showWomenSafety ? 'active' : ''}`}
+          onClick={() => setShowWomenSafety(!showWomenSafety)}
+          title="여성밤길치안안전"
+        >
+          🕵️
+        </button>
+
+        {/* 편의점 버튼 */}
+        <button
+          className={`map-type-btn ${showConvenienceStores ? 'active' : ''}`}
+          onClick={() => setShowConvenienceStores(!showConvenienceStores)}
+          title="편의점 위치"
+        >
+          🏪
+        </button>
       </div>
 
       <div style={{
@@ -461,6 +493,76 @@ function MapView({ locations, currentLocation, currentUserId, isTracking, myLoca
             opacity={0.7}
           />
         )}
+
+        {/* 범죄주의구간(성폭력) WMS 레이어 */}
+        {showCrimeZones && (
+          <WMSTileLayer
+            key={`crime-zones-${mapType}`}
+            url={`http://www.safemap.go.kr/openApiService/wms/getLayerData.do?apikey=${import.meta.env.VITE_SAFEMAP_TOKEN}`}
+            layers="A2SM_CRMNLHSPOT_TOT"
+            styles="A2SM_CrmnlHspot_Tot_Rape"
+            format="image/png"
+            transparent={true}
+            attribution="안전지도 범죄주의구간"
+            opacity={0.6}
+          />
+        )}
+
+        {/* 치안시설 WMS 레이어 */}
+        {showSecurityFacilities && (
+          <WMSTileLayer
+            key={`security-facilities-${mapType}`}
+            url={`http://www.safemap.go.kr/openApiService/wms/getLayerData.do?apikey=${import.meta.env.VITE_SAFEMAP_TOKEN}`}
+            layers="A2SM_CMMNPOI2"
+            styles="A2SM_CmmnPoi2"
+            format="image/png"
+            transparent={true}
+            attribution="안전지도 치안시설"
+            opacity={0.7}
+          />
+        )}
+
+        {/* 안전비상벨 WMS 레이어 */}
+        {showEmergencyBells && (
+          <WMSTileLayer
+            key={`emergency-bells-${mapType}`}
+            url={`http://www.safemap.go.kr/openApiService/wms/getLayerData.do?apikey=${import.meta.env.VITE_SAFEMAP_TOKEN}`}
+            layers="A2SM_CMMNPOI_EMGBELL"
+            styles="A2SM_CMMNPOI_EMGBELL"
+            format="image/png"
+            transparent={true}
+            attribution="안전지도 안전비상벨"
+            opacity={0.8}
+          />
+        )}
+
+        {/* 여성밤길치안안전 WMS 레이어 */}
+        {showWomenSafety && (
+          <WMSTileLayer
+            key={`women-safety-${mapType}`}
+            url={`http://www.safemap.go.kr/openApiService/wms/getLayerData.do?apikey=${import.meta.env.VITE_SAFEMAP_TOKEN}`}
+            layers="A2SM_CRMNLHSPOT_F1_TOT"
+            styles="A2SM_OdblrCrmnlHspot_Tot_20_24"
+            format="image/png"
+            transparent={true}
+            attribution="안전지도 여성밤길치안안전"
+            opacity={0.6}
+          />
+        )}
+
+        {/* 편의점 WMS 레이어 */}
+        {showConvenienceStores && (
+          <WMSTileLayer
+            key={`convenience-stores-${mapType}`}
+            url={`http://www.safemap.go.kr/openApiService/wms/getLayerData.do?apikey=${import.meta.env.VITE_SAFEMAP_TOKEN}`}
+            layers="A2SM_CMMNPOI"
+            styles="A2SM_CMMNPOI_08"
+            format="image/png"
+            transparent={true}
+            attribution="안전지도 편의점"
+            opacity={0.8}
+          />
+        )}
       
         {/* 현재 사용자 위치 */}
         {currentLocation && (
@@ -520,9 +622,13 @@ function MapView({ locations, currentLocation, currentUserId, isTracking, myLoca
               >
                 <Popup>
                   <strong>🏥 {hospital.name}</strong><br/>
-                  병원<br/>
-                  위도: {hospital.lat.toFixed(6)}<br/>
-                  경도: {hospital.lng.toFixed(6)}
+                  <div style={{fontSize: '0.9em', marginTop: '4px'}}>
+                    <div>📍 {hospital.address}</div>
+                    <div>📞 {hospital.phone}</div>
+                    <div>🕐 {hospital.opening_hours}</div>
+                    {hospital.operator && <div>🏢 {hospital.operator}</div>}
+                    <div style={{marginTop: '4px', color: '#999'}}>위도: {hospital.lat.toFixed(6)}, 경도: {hospital.lng.toFixed(6)}</div>
+                  </div>
                 </Popup>
               </Marker>
             ))}
@@ -541,9 +647,13 @@ function MapView({ locations, currentLocation, currentUserId, isTracking, myLoca
               >
                 <Popup>
                   <strong>🚔 {station.name}</strong><br/>
-                  경찰서<br/>
-                  위도: {station.lat.toFixed(6)}<br/>
-                  경도: {station.lng.toFixed(6)}
+                  <div style={{fontSize: '0.9em', marginTop: '4px'}}>
+                    <div>📍 {station.address}</div>
+                    <div>📞 {station.phone}</div>
+                    <div>🕐 {station.opening_hours}</div>
+                    {station.operator && <div>🏢 {station.operator}</div>}
+                    <div style={{marginTop: '4px', color: '#999'}}>위도: {station.lat.toFixed(6)}, 경도: {station.lng.toFixed(6)}</div>
+                  </div>
                 </Popup>
               </Marker>
             ))}
@@ -562,9 +672,13 @@ function MapView({ locations, currentLocation, currentUserId, isTracking, myLoca
               >
                 <Popup>
                   <strong>🛡️ {station.name}</strong><br/>
-                  파출소<br/>
-                  위도: {station.lat.toFixed(6)}<br/>
-                  경도: {station.lng.toFixed(6)}
+                  <div style={{fontSize: '0.9em', marginTop: '4px'}}>
+                    <div>📍 {station.address}</div>
+                    <div>📞 {station.phone}</div>
+                    <div>🕐 {station.opening_hours}</div>
+                    {station.operator && <div>🏢 {station.operator}</div>}
+                    <div style={{marginTop: '4px', color: '#999'}}>위도: {station.lat.toFixed(6)}, 경도: {station.lng.toFixed(6)}</div>
+                  </div>
                 </Popup>
               </Marker>
             ))}

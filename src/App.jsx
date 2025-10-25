@@ -123,6 +123,7 @@ function App() {
   });
 
   return (
+    <>
     <div className="container">
       <div className="content-grid">
         <div className="sidebar">
@@ -270,6 +271,21 @@ function App() {
         </div>
       </div>
     </div>
+    <footer style={{
+      textAlign: 'center',
+      padding: '20px',
+      backgroundColor: '#1a1a1a',
+      borderTop: '1px solid #333'
+    }}>
+      <a href="https://www.safemap.go.kr" target="_blank" rel="noopener noreferrer">
+        <img 
+          src="https://www.safemap.go.kr/share/images/common/public_data_license_img.png" 
+          alt="안전지도 공공데이터 라이센스" 
+          style={{ maxWidth: '200px', height: 'auto' }}
+        />
+      </a>
+    </footer>
+    </>
   );
 }
 
