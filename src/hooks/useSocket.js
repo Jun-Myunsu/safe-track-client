@@ -96,9 +96,9 @@ export function useSocket(handlers) {
             return newSet
           })
         }
-        
+
         if (data.accepted) {
-          handlers.setStatus(`✅ ${data.targetName}이 내 위치 공유를 수락했습니다`)
+          handlers.setStatus(`✅ ${data.targetName}이 내 위치 공유를 수락했습니다. 위치 추적을 시작하세요.`)
           handlers.setSharedUsers(prev => [...prev, { id: data.targetUserId, name: data.targetName }])
           // 푸시 알림 표시
           if (handlers.pushNotificationService) {
@@ -106,10 +106,10 @@ export function useSocket(handlers) {
           }
           // 음성 알림
           speechService.notifyShareAccepted(data.targetName)
-          // 요청자의 위치 추적 시작
-          if (handlers.startTracking && !handlers.isTracking && !handlers.isSimulating) {
-            handlers.startTracking()
-          }
+
+          // 자동 추적 시작 제거 - 사용자가 수동으로 시작해야 함
+          // 이유: 사용자가 명시적으로 추적을 중지했을 수 있음
+          // 공유 수락만으로 자동 시작하면 사용자 의도와 다를 수 있음
         } else {
           const reason = data.reason === 'busy' ? '다른 사용자와 공유 중입니다' : '거부했습니다'
           handlers.setStatus(`❌ ${data.targetName}이 내 위치 공유를 ${reason}`)
@@ -241,16 +241,29 @@ export function useSocket(handlers) {
         setTimeout(() => handlers.setStatus(''), 3000)
       },
       restoreState: (data) => {
-        // 공유 상태 복원
-        if (data.sharedUsers && data.sharedUsers.length > 0) {
-          handlers.setSharedUsers(data.sharedUsers)
-          localStorage.setItem('safetrack_sharedUsers', JSON.stringify(data.sharedUsers))
+        // 공유 상태 복원 (서버 상태가 단일 진실의 원천)
+        const sharedUsers = data.sharedUsers || []
+        const receivedShares = data.receivedShares || []
+
+        handlers.setSharedUsers(sharedUsers)
+        localStorage.setItem('safetrack_sharedUsers', JSON.stringify(sharedUsers))
+
+        handlers.setReceivedShares(receivedShares)
+        localStorage.setItem('safetrack_receivedShares', JSON.stringify(receivedShares))
+
+        // 추적 상태는 서버에서 항상 false로 복원됨 (수동 시작 필요)
+        if (data.isTracking !== undefined && handlers.setIsTracking) {
+          // 클라이언트 상태도 서버와 동기화
+          if (!data.isTracking && (handlers.isTracking || handlers.isSimulating)) {
+            handlers.stopTracking()
+          }
         }
-        if (data.receivedShares && data.receivedShares.length > 0) {
-          handlers.setReceivedShares(data.receivedShares)
-          localStorage.setItem('safetrack_receivedShares', JSON.stringify(data.receivedShares))
-        }
-        console.log('✅ 공유 상태 복원됨:', data)
+
+        console.log('✅ 공유 상태 복원됨:', {
+          sharedUsers: sharedUsers.length,
+          receivedShares: receivedShares.length,
+          isTracking: data.isTracking
+        })
       },
       loginError: (data) => {
         if (isAutoLogin) {
