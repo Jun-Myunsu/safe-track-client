@@ -190,12 +190,12 @@ function MapView({ locations, currentLocation, currentUserId, isTracking, myLoca
     }
   }, [currentLocation, isTracking, showDangerZones, myLocationHistory, emergencyLocations]);
 
-  // 위험 지역 토글 시 또는 위치 변경 시 분석 실행
+  // 위험 지역 토글 시에만 초기 분석 실행 (위치 변경 시 재실행 안 함)
   useEffect(() => {
     if (showDangerZones && isTracking && currentLocation) {
       analyzeCurrentDanger();
     }
-  }, [showDangerZones, analyzeCurrentDanger]);
+  }, [showDangerZones]); // analyzeCurrentDanger 의존성 제거하여 위치 변경 시 재실행 방지
 
   // 5분마다 위험 분석 업데이트 (추적 중일 때만)
   useEffect(() => {
