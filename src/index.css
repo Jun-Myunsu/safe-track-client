@@ -93,8 +93,8 @@ body::before {
 
 .section {
   background: #2a2a2a;
-  margin: 0 0 15px 0;
-  padding: 24px;
+  margin: 0 0 0px 0;
+  padding: 20px;
   border: 2px solid #555555;
   border-radius: 0;
   height: fit-content;
@@ -108,8 +108,8 @@ body::before {
 
 @media (max-width: 1024px) {
   .section {
-    padding: 8px;
-    margin: 0 0 8px 0;
+    padding: 10px;
+    margin: 0 0 0 0;
     box-shadow: 2px 2px 0px #000000;
     border-width: 1px;
   }
@@ -563,7 +563,7 @@ body::before {
   height: 400px;
   width: 100%;
   max-width: 100%;
-  margin: 16px 0 0 0;
+  margin: 2px 0 0 0;
   border: 2px solid #555555;
   border-radius: 0;
   overflow: hidden;
@@ -587,7 +587,7 @@ body::before {
 .map-section {
   background: #2a2a2a;
   margin: 0;
-  padding: 10px;
+  padding: 5px 10px;
   border: 2px solid #555555;
   border-radius: 0;
   box-shadow: 4px 4px 0px #000000;
@@ -829,7 +829,23 @@ p {
   }
 }
 
+.chat-messages-container {
+  height: 150px;
+}
+
+.ai-chat-messages-container {
+  height: 280px;
+}
+
 @media (max-width: 1024px) {
+  .chat-messages-container {
+    height: 300px;
+  }
+
+  .ai-chat-messages-container {
+    height: 350px;
+  }
+
   .map-section {
     padding: 8px;
     box-shadow: 2px 2px 0px #000000;
