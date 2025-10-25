@@ -2,6 +2,8 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
 import { useEffect, useState, useMemo, useCallback } from 'react'
 import L from 'leaflet'
 import Compass from './components/Compass'
+import DangerZoneOverlay from './components/DangerZoneOverlay'
+import { analyzeDangerZones } from './services/dangerPredictionService'
 
 // 기본 마커 아이콘 설정
 delete L.Icon.Default.prototype._getIconUrl
@@ -84,6 +86,9 @@ function MapView({ locations, currentLocation, currentUserId, isTracking, myLoca
   const [mapCenter, setMapCenter] = useState(center)
   const [mapBounds, setMapBounds] = useState(null)
   const [emergencyLocations, setEmergencyLocations] = useState({ hospitals: [], police: [], stations: [] })
+  const [showDangerZones, setShowDangerZones] = useState(false)
+  const [dangerAnalysis, setDangerAnalysis] = useState(null)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
   
   // 실제 응급시설 API 호출
   const fetchEmergencyFacilities = useCallback(async () => {
@@ -137,6 +142,60 @@ function MapView({ locations, currentLocation, currentUserId, isTracking, myLoca
   useEffect(() => {
     fetchEmergencyFacilities()
   }, [fetchEmergencyFacilities])
+
+  // AI 위험 지역 분석
+  const analyzeCurrentDanger = useCallback(async () => {
+    if (!currentLocation || !isTracking || !showDangerZones) {
+      return;
+    }
+
+    setIsAnalyzing(true);
+
+    try {
+      const result = await analyzeDangerZones({
+        locationHistory: myLocationHistory || [],
+        currentLocation,
+        timestamp: new Date(),
+        emergencyFacilities: emergencyLocations
+      });
+
+      if (result.success) {
+        setDangerAnalysis(result.data);
+
+        // 음성 알림 (전체 위험도가 medium 이상일 때)
+        if (result.data.overallRiskLevel === 'high') {
+          console.log('⚠️ 높은 위험도 감지:', result.data);
+        } else if (result.data.overallRiskLevel === 'medium') {
+          console.log('⚡ 중간 위험도 감지:', result.data);
+        }
+      } else {
+        console.warn('위험 분석 실패:', result.error);
+        setDangerAnalysis(result.data); // 기본 안전 정보 사용
+      }
+    } catch (error) {
+      console.error('위험 분석 오류:', error);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  }, [currentLocation, isTracking, showDangerZones, myLocationHistory, emergencyLocations]);
+
+  // 위험 지역 토글 시 또는 위치 변경 시 분석 실행
+  useEffect(() => {
+    if (showDangerZones && isTracking && currentLocation) {
+      analyzeCurrentDanger();
+    }
+  }, [showDangerZones, analyzeCurrentDanger]);
+
+  // 30초마다 위험 분석 업데이트 (추적 중일 때만)
+  useEffect(() => {
+    if (!showDangerZones || !isTracking) return;
+
+    const interval = setInterval(() => {
+      analyzeCurrentDanger();
+    }, 30000); // 30초마다 업데이트
+
+    return () => clearInterval(interval);
+  }, [showDangerZones, isTracking, analyzeCurrentDanger])
   
   const mapTypes = useMemo(() => ({
     street: {
@@ -214,7 +273,58 @@ function MapView({ locations, currentLocation, currentUserId, isTracking, myLoca
         >
           🚗
         </button>
+        <button
+          className={`map-type-btn ${showDangerZones ? 'active' : ''}`}
+          onClick={() => setShowDangerZones(!showDangerZones)}
+          disabled={!isTracking}
+          title={isTracking ? 'AI 위험 분석 토글' : '위치 추적을 시작하세요'}
+        >
+          🤖
+        </button>
       </div>
+
+      {/* 안전 정보 패널 */}
+      {showDangerZones && dangerAnalysis && (
+        <div style={{
+          position: 'absolute',
+          top: '10px',
+          left: '10px',
+          zIndex: 1000,
+          backgroundColor: 'rgba(42, 42, 42, 0.95)',
+          padding: '12px',
+          borderRadius: '8px',
+          border: '1px solid #555',
+          maxWidth: '300px',
+          maxHeight: '200px',
+          overflowY: 'auto',
+          boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
+        }}>
+          <div style={{
+            marginBottom: '8px',
+            fontSize: '1rem',
+            fontWeight: 'bold',
+            color: dangerAnalysis.overallRiskLevel === 'high' ? '#ff3333' :
+                   dangerAnalysis.overallRiskLevel === 'medium' ? '#ff8800' : '#00ff88'
+          }}>
+            {isAnalyzing ? '🔄 분석 중...' :
+             dangerAnalysis.overallRiskLevel === 'high' ? '⚠️ 높은 주의 필요' :
+             dangerAnalysis.overallRiskLevel === 'medium' ? '⚡ 주의 필요' : '✅ 안전'}
+          </div>
+          <div style={{ fontSize: '0.85rem', color: '#cccccc' }}>
+            <strong>안전 팁:</strong>
+            <ul style={{ margin: '4px 0', paddingLeft: '20px', listStyle: 'none' }}>
+              {dangerAnalysis.safetyTips?.slice(0, 3).map((tip, idx) => (
+                <li key={idx} style={{ marginBottom: '4px' }}>• {tip}</li>
+              ))}
+            </ul>
+          </div>
+          {dangerAnalysis.dangerZones?.length > 0 && (
+            <div style={{ fontSize: '0.8rem', color: '#aaa', marginTop: '6px' }}>
+              📍 {dangerAnalysis.dangerZones.length}개 주의 지역 표시됨
+            </div>
+          )}
+        </div>
+      )}
       <MapContainer
         center={center}
         zoom={14}
@@ -343,6 +453,11 @@ function MapView({ locations, currentLocation, currentUserId, isTracking, myLoca
               </Marker>
             ))}
           </>
+        )}
+
+        {/* AI 위험 지역 오버레이 */}
+        {showDangerZones && dangerAnalysis && (
+          <DangerZoneOverlay dangerZones={dangerAnalysis.dangerZones} />
         )}
       </MapContainer>
     </div>
