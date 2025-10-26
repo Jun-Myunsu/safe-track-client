@@ -204,66 +204,66 @@ export default function MissingPersonMap({ showMissingPersons, onStatusChange, c
 
         return (
           <Marker key={i} position={[lat, lng]} icon={createMissingPersonIcon()} zIndexOffset={700}>
-            <Popup>
-              <div style={{ width: 220, fontFamily: "'아리따 돋움', sans-serif" }}>
+            <Popup autoPan={false} closeButton={true} closeOnClick={true}>
+              <div style={{ width: 200, fontFamily: "'아리따 돋움', sans-serif" }}>
                 <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
                   {photo && (
                     <img
                       src={photo}
                       alt={item.nm || "사진"}
-                      width={64}
-                      height={84}
+                      width={60}
+                      height={80}
                       style={{ objectFit: "cover", borderRadius: 4, border: "2px solid #333" }}
                     />
                   )}
                   <div>
-                    <strong style={{ color: "#000", fontSize: "1.1rem" }}>
-                      {item.nm || "이름미상"}
-                    </strong>
+                    {item.msspsnIdntfccd ? (
+                      <a
+                        href={`https://www.safe182.go.kr/home/lcm/lcmMssGet.do?gnbMenuCd=014000000000&lnbMenuCd=014001000000&rptDscd=2&msspsnIdntfccd=${item.msspsnIdntfccd}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ 
+                          color: "#3b82f6", 
+                          fontSize: "1rem", 
+                          fontWeight: "600", 
+                          textDecoration: "none", 
+                          cursor: "pointer",
+                          transition: "color 0.2s ease"
+                        }}
+                        onMouseEnter={(e) => e.target.style.color = "#1e40af"}
+                        onMouseLeave={(e) => e.target.style.color = "#3b82f6"}
+                      >
+                        {item.nm || "이름미상"}
+                      </a>
+                    ) : (
+                      <strong style={{ color: "#000", fontSize: "1rem", fontWeight: "600" }}>
+                        {item.nm || "이름미상"}
+                      </strong>
+                    )}
                     <br />
-                    <span style={{ fontSize: "0.85rem", color: "#555" }}>발생일: {dateStr}</span>
+                    <span style={{ fontSize: "0.8rem", color: "#555" }}>발생일: {dateStr}</span>
                     <br />
-                    <span style={{ fontSize: "0.85rem", color: "#555" }}>
+                    <span style={{ fontSize: "0.8rem", color: "#555" }}>
                       {item.sexdstnDscd || ""} / 당시 {item.age || "-"}세
                     </span>
                     <br />
-                    <span style={{ fontSize: "0.85rem", color: "#555" }}>
+                    <span style={{ fontSize: "0.8rem", color: "#555" }}>
                       현재 {item.ageNow || "-"}세
                     </span>
                   </div>
                 </div>
-                <div style={{ fontSize: "0.85rem", color: "#333", marginTop: 6 }}>
+                <div style={{ fontSize: "0.8rem", color: "#333", marginTop: 6 }}>
                   <div>📍 {item.occrAdres || "-"}</div>
                   {item.height && <div>키: {item.height}cm</div>}
                   {item.bdwgh && <div>몸무게: {item.bdwgh}kg</div>}
                   {item.alldressingDscd && item.alldressingDscd !== "불상" && (
-                    <div style={{ marginTop: 4, fontSize: "0.8rem", color: "#666" }}>
+                    <div style={{ marginTop: 4, fontSize: "0.75rem", color: "#666" }}>
                       착의: {item.alldressingDscd}
                     </div>
                   )}
                 </div>
-                {item.msspsnIdntfccd && (
-                  <div style={{ marginTop: 8 }}>
-                    <a
-                      href={`https://www.safe182.go.kr/home/lcm/lcmMssGet.do?gnbMenuCd=014000000000&lnbMenuCd=014001000000&rptDscd=2&msspsnIdntfccd=${item.msspsnIdntfccd}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      style={{
-                        display: "inline-block",
-                        padding: "6px 12px",
-                        background: "#333",
-                        color: "#fff",
-                        textDecoration: "none",
-                        borderRadius: 4,
-                        fontSize: "0.85rem",
-                        fontWeight: "bold",
-                      }}
-                    >
-                      상세 정보 보기
-                    </a>
-                  </div>
-                )}
-                <div style={{ marginTop: 12, paddingTop: 8, borderTop: "1px solid #ddd", textAlign: "center", fontSize: "0.75rem", color: "#888" }}>
+                <div style={{ marginTop: 8, paddingTop: 6, borderTop: "1px solid #ddd", textAlign: "center", fontSize: "0.7rem", color: "#888" }}>
                   자료 출처: 경찰청
                 </div>
               </div>
