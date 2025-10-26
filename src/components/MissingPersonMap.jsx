@@ -4,8 +4,6 @@ import L from "leaflet";
 
 // 안전드림 API 호출 (서버 프록시 사용)
 async function fetchAmberList({
-  esntlId,
-  authKey,
   rowSize = 50,
   page = 1,
   writngTrgetDscds = ["010", "060", "070"],
@@ -18,8 +16,6 @@ async function fetchAmberList({
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      esntlId,
-      authKey,
       rowSize: String(rowSize),
       page: String(page),
       writngTrgetDscds,
@@ -110,17 +106,8 @@ export default function MissingPersonMap({ showMissingPersons, onStatusChange, c
   const map = useMap();
   const [mapCenter, setMapCenter] = useState(null);
 
-  const esntlId = import.meta.env.VITE_SAFE182_ESNTL_ID;
-  const authKey = import.meta.env.VITE_SAFE182_AUTH_KEY;
-
   const loadMissingPersons = useCallback(async () => {
     if (!showMissingPersons || !mapCenter) return;
-
-    if (!esntlId || !authKey) {
-      setError("API 키가 설정되지 않았습니다");
-      onStatusChange?.("⚠️ 안전드림 API 키를 .env 파일에 설정하세요");
-      return;
-    }
 
     setLoading(true);
     setError(null);
@@ -131,8 +118,6 @@ export default function MissingPersonMap({ showMissingPersons, onStatusChange, c
       onStatusChange?.(`📍 ${locationQuery || "현재 위치"} 지역 실종자 검색 중...`);
 
       const data = await fetchAmberList({
-        esntlId,
-        authKey,
         rowSize: 30,
         page: 1,
         writngTrgetDscds: ["010", "060", "070"],
@@ -177,7 +162,7 @@ export default function MissingPersonMap({ showMissingPersons, onStatusChange, c
     } finally {
       setLoading(false);
     }
-  }, [showMissingPersons, mapCenter, esntlId, authKey, onStatusChange, map]);
+  }, [showMissingPersons, mapCenter, onStatusChange, map]);
 
   useEffect(() => {
     if (showMissingPersons && currentLocation) {
