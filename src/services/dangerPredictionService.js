@@ -5,6 +5,9 @@
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3000';
 
+// 위험 예측 분석 범위 (미터)
+export const DANGER_ANALYSIS_RADIUS = 1000; // 도보 10~12분 거리
+
 /**
  * 기본 안전 정보 생성 (API 키 없을 때 또는 에러 시)
  * @param {Object} currentLocation - 현재 위치
@@ -78,7 +81,8 @@ export const analyzeDangerZones = async ({
       body: JSON.stringify({
         locationHistory,
         currentLocation,
-        emergencyFacilities
+        emergencyFacilities,
+        analysisRadius: DANGER_ANALYSIS_RADIUS
       })
     });
 

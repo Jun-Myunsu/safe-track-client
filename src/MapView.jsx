@@ -56,14 +56,85 @@ const createOtherUserMarkerIcon = () =>
     iconAnchor: [10, 10],
   });
 
-// OSRM 길찾기 API 호출
-async function getRoute(start, end) {
+// Haversine 공식을 사용한 정확한 거리 계산 (미터)
+function getDistanceInMeters(lat1, lng1, lat2, lng2) {
+  const R = 6371000; // 지구 반지름 (미터)
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+// 경로가 위험 지역과 교차하는지 확인
+function routeIntersectsDangerZone(routeCoords, dangerZones) {
+  if (!dangerZones || dangerZones.length === 0) return { intersects: false, count: 0 };
+  
+  let intersectionCount = 0;
+  const intersectedZones = [];
+  
+  for (const zone of dangerZones) {
+    let zoneIntersected = false;
+    
+    for (let i = 0; i < routeCoords.length; i++) {
+      const [lat, lng] = routeCoords[i];
+      const distance = getDistanceInMeters(lat, lng, zone.lat, zone.lng);
+      
+      if (distance <= zone.radius) {
+        zoneIntersected = true;
+        break;
+      }
+      
+      // 선분 검사: 두 점 사이의 중간 지점도 확인
+      if (i < routeCoords.length - 1) {
+        const [nextLat, nextLng] = routeCoords[i + 1];
+        const midLat = (lat + nextLat) / 2;
+        const midLng = (lng + nextLng) / 2;
+        const midDistance = getDistanceInMeters(midLat, midLng, zone.lat, zone.lng);
+        
+        if (midDistance <= zone.radius) {
+          zoneIntersected = true;
+          break;
+        }
+      }
+    }
+    
+    if (zoneIntersected) {
+      intersectedZones.push(zone);
+      intersectionCount++;
+    }
+  }
+  
+  return { intersects: intersectionCount > 0, count: intersectionCount, zones: intersectedZones };
+}
+
+// OSRM 길찾기 API 호출 (대안 경로 포함)
+async function getRoute(start, end, dangerZones = []) {
   try {
-    const url = `https://router.project-osrm.org/route/v1/foot/${start.lng},${start.lat};${end.lng},${end.lat}?overview=full&geometries=geojson`;
+    const url = `https://router.project-osrm.org/route/v1/foot/${start.lng},${start.lat};${end.lng},${end.lat}?overview=full&geometries=geojson&alternatives=3`;
     const res = await fetch(url);
     const data = await res.json();
+    
     if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
-      return data.routes[0];
+      // 모든 경로를 평가
+      const routesWithSafety = data.routes.map(route => {
+        const coords = route.geometry.coordinates.map(([lng, lat]) => [lat, lng]);
+        const safety = routeIntersectsDangerZone(coords, dangerZones);
+        return {
+          ...route,
+          coords,
+          safety,
+          score: safety.count * 1000 + route.distance // 위험 지역 개수 + 거리
+        };
+      });
+      
+      // 가장 안전한 경로 선택 (위험 지역 적고 거리 짧은 순)
+      routesWithSafety.sort((a, b) => a.score - b.score);
+      
+      return routesWithSafety[0];
     }
     return null;
   } catch (error) {
@@ -413,16 +484,16 @@ function MapView({
     const destination = { lat: e.latlng.lat, lng: e.latlng.lng };
     setDestinationMarker(destination);
     
-    const route = await getRoute(currentLocation, destination);
+    const route = await getRoute(currentLocation, destination, dangerAnalysis?.dangerZones || []);
     if (route) {
-      const coords = route.geometry.coordinates.map(([lng, lat]) => [lat, lng]);
-      setRouteCoordinates(coords);
+      setRouteCoordinates(route.coords);
       setRouteInfo({
         distance: (route.distance / 1000).toFixed(2),
-        duration: Math.round(route.duration / 60)
+        duration: Math.round(route.duration / 60),
+        safety: route.safety
       });
     }
-  }, [currentLocation, isTracking]);
+  }, [currentLocation, isTracking, dangerAnalysis]);
 
   const clearRoute = useCallback(() => {
     setDestinationMarker(null);
@@ -435,6 +506,25 @@ function MapView({
       clearRoute();
     }
   }, [isTracking, clearRoute]);
+
+  useEffect(() => {
+    const updateRouteInfo = async () => {
+      if (!destinationMarker || !currentLocation || !isTracking || !routeCoordinates) return;
+      
+      const route = await getRoute(currentLocation, destinationMarker, dangerAnalysis?.dangerZones || []);
+      if (route) {
+        setRouteInfo({
+          distance: (route.distance / 1000).toFixed(2),
+          duration: Math.round(route.duration / 60),
+          safety: route.safety
+        });
+      }
+    };
+    
+    if (routeCoordinates) {
+      updateRouteInfo();
+    }
+  }, [currentLocation]);
 
   return (
     <div style={{ position: "relative" }}>
@@ -482,35 +572,42 @@ function MapView({
             left: "50%",
             transform: "translateX(-50%)",
             zIndex: 10000,
-            backgroundColor: "rgba(42, 42, 42, 0.95)",
-            padding: "12px 20px",
-            borderRadius: 8,
-            border: "2px solid #3b82f6",
-            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.5)",
+            backgroundColor: "rgba(0, 0, 0, 0.75)",
+            padding: "6px 12px",
+            borderRadius: 6,
+            border: routeInfo.safety?.intersects 
+              ? "1px solid #ef4444" 
+              : "1px solid #3b82f6",
+            boxShadow: "0 2px 6px rgba(0, 0, 0, 0.4)",
+            backdropFilter: "blur(4px)",
             display: "flex",
-            gap: 16,
+            gap: 8,
             alignItems: "center",
+            maxWidth: "90vw",
           }}
         >
-          <div style={{ color: "#e0e0e0", fontSize: "0.95rem" }}>
-            <span style={{ fontWeight: "bold" }}>🚶 {routeInfo.distance}km</span>
-            <span style={{ margin: "0 8px", color: "#666" }}>|</span>
-            <span style={{ fontWeight: "bold" }}>⏱️ {routeInfo.duration}분</span>
+          <div style={{ color: "#fff", fontSize: "0.75rem", whiteSpace: "nowrap" }}>
+            🚶 {routeInfo.distance}km · {routeInfo.duration}분
+            {routeInfo.safety?.intersects && (
+              <span style={{ color: "#fbbf24", marginLeft: 4 }}>⚠️{routeInfo.safety.count}</span>
+            )}
+            {!routeInfo.safety?.intersects && showDangerZones && (
+              <span style={{ color: "#10b981", marginLeft: 4 }}>✅</span>
+            )}
           </div>
           <button
             onClick={clearRoute}
             style={{
-              background: "#ef4444",
-              color: "white",
+              background: "transparent",
+              color: "#ef4444",
               border: "none",
-              borderRadius: 4,
-              padding: "6px 12px",
+              padding: 0,
               cursor: "pointer",
-              fontSize: "0.85rem",
-              fontWeight: "bold",
+              fontSize: "1rem",
+              lineHeight: 1,
             }}
           >
-            ✕ 삭제
+            ✕
           </button>
         </div>
       )}
@@ -1186,6 +1283,16 @@ function MapView({
                 <div style={{ marginTop: 8, fontSize: "0.9rem" }}>
                   <div>🚶 거리: {routeInfo.distance}km</div>
                   <div>⏱️ 시간: 약 {routeInfo.duration}분</div>
+                  {routeInfo.safety?.intersects && (
+                    <div style={{ marginTop: 4, color: "#f59e0b", fontWeight: "bold" }}>
+                      ⚠️ 위험 지역 {routeInfo.safety.count}곳 통과
+                    </div>
+                  )}
+                  {!routeInfo.safety?.intersects && showDangerZones && (
+                    <div style={{ marginTop: 4, color: "#10b981", fontWeight: "bold" }}>
+                      ✅ 안전한 경로
+                    </div>
+                  )}
                   <button
                     onClick={clearRoute}
                     style={{
