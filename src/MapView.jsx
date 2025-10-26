@@ -56,6 +56,22 @@ const createOtherUserMarkerIcon = () =>
     iconAnchor: [10, 10],
   });
 
+// OSRM 길찾기 API 호출
+async function getRoute(start, end) {
+  try {
+    const url = `https://router.project-osrm.org/route/v1/foot/${start.lng},${start.lat};${end.lng},${end.lat}?overview=full&geometries=geojson`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
+      return data.routes[0];
+    }
+    return null;
+  } catch (error) {
+    console.error('경로 검색 실패:', error);
+    return null;
+  }
+}
+
 // 지도 중심 업데이트 컴포넌트
 function MapUpdater({
   currentLocation,
@@ -64,8 +80,46 @@ function MapUpdater({
   setMapCenter,
   setMapBounds,
   setMapInstance,
+  onMapClick,
 }) {
   const map = useMap();
+
+  useEffect(() => {
+    if (onMapClick) {
+      let touchTimer = null;
+      let touchMoved = false;
+
+      const handleTouchStart = (e) => {
+        touchMoved = false;
+        touchTimer = setTimeout(() => {
+          if (!touchMoved && e.latlng) {
+            onMapClick(e);
+          }
+        }, 500);
+      };
+
+      const handleTouchMove = () => {
+        touchMoved = true;
+        if (touchTimer) clearTimeout(touchTimer);
+      };
+
+      const handleTouchEnd = () => {
+        if (touchTimer) clearTimeout(touchTimer);
+      };
+
+      map.on('contextmenu', onMapClick);
+      map.on('touchstart', handleTouchStart);
+      map.on('touchmove', handleTouchMove);
+      map.on('touchend', handleTouchEnd);
+
+      return () => {
+        map.off('contextmenu', onMapClick);
+        map.off('touchstart', handleTouchStart);
+        map.off('touchmove', handleTouchMove);
+        map.off('touchend', handleTouchEnd);
+      };
+    }
+  }, [map, onMapClick]);
 
   useEffect(() => {
     if (setMapInstance) {
@@ -156,6 +210,9 @@ function MapView({
   const [mapInstance, setMapInstance] = useState(null);
   const [isMapRotating, setIsMapRotating] = useState(false);
   const [showMapButtons, setShowMapButtons] = useState(true);
+  const [destinationMarker, setDestinationMarker] = useState(null);
+  const [routeCoordinates, setRouteCoordinates] = useState(null);
+  const [routeInfo, setRouteInfo] = useState(null);
 
   // 실제 응급시설 API 호출
   const fetchEmergencyFacilities = useCallback(async () => {
@@ -350,6 +407,35 @@ function MapView({
     []
   );
 
+  const handleMapClick = useCallback(async (e) => {
+    if (!currentLocation || !isTracking) return;
+    
+    const destination = { lat: e.latlng.lat, lng: e.latlng.lng };
+    setDestinationMarker(destination);
+    
+    const route = await getRoute(currentLocation, destination);
+    if (route) {
+      const coords = route.geometry.coordinates.map(([lng, lat]) => [lat, lng]);
+      setRouteCoordinates(coords);
+      setRouteInfo({
+        distance: (route.distance / 1000).toFixed(2),
+        duration: Math.round(route.duration / 60)
+      });
+    }
+  }, [currentLocation, isTracking]);
+
+  const clearRoute = useCallback(() => {
+    setDestinationMarker(null);
+    setRouteCoordinates(null);
+    setRouteInfo(null);
+  }, []);
+
+  useEffect(() => {
+    if (!isTracking) {
+      clearRoute();
+    }
+  }, [isTracking, clearRoute]);
+
   return (
     <div style={{ position: "relative" }}>
       {/* 동작하는 나침판 */}
@@ -363,6 +449,71 @@ function MapView({
       >
         <Compass />
       </div>
+
+      {/* 길찾기 안내 */}
+      {isTracking && !destinationMarker && (
+        <div
+          style={{
+            position: "absolute",
+            bottom: "10px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 999,
+            backgroundColor: "rgba(0, 0, 0, 0.6)",
+            padding: "4px 10px",
+            borderRadius: 4,
+            color: "rgba(255, 255, 255, 0.9)",
+            fontSize: "0.7rem",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+            backdropFilter: "blur(4px)",
+            whiteSpace: "nowrap",
+          }}
+        >
+          📍 길게 누르기 / 우클릭으로 길찾기
+        </div>
+      )}
+
+      {/* 경로 정보 표시 */}
+      {routeInfo && (
+        <div
+          style={{
+            position: "absolute",
+            top: "10px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 10000,
+            backgroundColor: "rgba(42, 42, 42, 0.95)",
+            padding: "12px 20px",
+            borderRadius: 8,
+            border: "2px solid #3b82f6",
+            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            gap: 16,
+            alignItems: "center",
+          }}
+        >
+          <div style={{ color: "#e0e0e0", fontSize: "0.95rem" }}>
+            <span style={{ fontWeight: "bold" }}>🚶 {routeInfo.distance}km</span>
+            <span style={{ margin: "0 8px", color: "#666" }}>|</span>
+            <span style={{ fontWeight: "bold" }}>⏱️ {routeInfo.duration}분</span>
+          </div>
+          <button
+            onClick={clearRoute}
+            style={{
+              background: "#ef4444",
+              color: "white",
+              border: "none",
+              borderRadius: 4,
+              padding: "6px 12px",
+              cursor: "pointer",
+              fontSize: "0.85rem",
+              fontWeight: "bold",
+            }}
+          >
+            ✕ 삭제
+          </button>
+        </div>
+      )}
 
       {/* AI 위험 분석 버튼 (지도 버튼 왼쪽) */}
       {showMapButtons && (
@@ -718,6 +869,7 @@ function MapView({
           setMapCenter={setMapCenter}
           setMapBounds={setMapBounds}
           setMapInstance={setMapInstance}
+          onMapClick={handleMapClick}
         />
         <TileLayer
           key={mapType}
@@ -1004,6 +1156,56 @@ function MapView({
           onStatusChange={setMissingPersonStatus}
           currentLocation={currentLocation}
         />
+
+        {/* 경로 표시 */}
+        {routeCoordinates && (
+          <Polyline
+            positions={routeCoordinates}
+            color="#3b82f6"
+            weight={4}
+            opacity={0.7}
+            pathOptions={{ lineCap: 'round', lineJoin: 'round' }}
+          />
+        )}
+
+        {/* 목적지 마커 */}
+        {destinationMarker && (
+          <Marker
+            position={[destinationMarker.lat, destinationMarker.lng]}
+            icon={L.divIcon({
+              html: `<div style="background: #ef4444; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; font-size: 14px;">📍</div>`,
+              className: "destination-marker",
+              iconSize: [24, 24],
+              iconAnchor: [12, 12],
+            })}
+            zIndexOffset={800}
+          >
+            <Popup>
+              <strong>목적지</strong>
+              {routeInfo && (
+                <div style={{ marginTop: 8, fontSize: "0.9rem" }}>
+                  <div>🚶 거리: {routeInfo.distance}km</div>
+                  <div>⏱️ 시간: 약 {routeInfo.duration}분</div>
+                  <button
+                    onClick={clearRoute}
+                    style={{
+                      marginTop: 8,
+                      padding: "6px 12px",
+                      background: "#ef4444",
+                      color: "white",
+                      border: "none",
+                      borderRadius: 4,
+                      cursor: "pointer",
+                      fontSize: "0.85rem"
+                    }}
+                  >
+                    경로 삭제
+                  </button>
+                </div>
+              )}
+            </Popup>
+          </Marker>
+        )}
 
         {/* CCTV 마커 */}
         {showCCTV && cctvList.map((cctv) => (
