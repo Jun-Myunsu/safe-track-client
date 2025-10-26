@@ -1,12 +1,4 @@
-import {
-  MapContainer,
-  TileLayer,
-  WMSTileLayer,
-  Marker,
-  Popup,
-  Polyline,
-  useMap,
-} from "react-leaflet";
+import { MapContainer, TileLayer, WMSTileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
 import { useEffect, useState, useMemo, useCallback } from "react";
 import L from "leaflet";
 import Compass from "./components/Compass";
@@ -14,134 +6,10 @@ import DangerZoneOverlay from "./components/DangerZoneOverlay";
 import MissingPersonMap from "./components/MissingPersonMap";
 import { analyzeDangerZones } from "./services/dangerPredictionService";
 import { fetchRoadCCTV } from "./data/publicCCTV";
-
-// 기본 마커 아이콘 설정
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
-  iconUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
-  shadowUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
-});
-
-// 마커 아이콘 생성 함수
-const createUserMarkerIcon = () =>
-  L.divIcon({
-    html: `
-    <div style="position: relative; width: 24px; height: 24px;">
-      <div style="background: linear-gradient(135deg, #ff6b6b, #ff3838); width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 3px 8px rgba(255, 59, 56, 0.4), 0 0 0 1px rgba(255, 59, 56, 0.2); display: flex; align-items: center; justify-content: center; position: relative; animation: pulse 2s infinite;">
-        <span style="color: white; font-weight: bold; font-size: 10px; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">📍</span>
-      </div>
-      <div style="position: absolute; top: -1px; right: -1px; background: #00ff88; width: 8px; height: 8px; border-radius: 50%; border: 1px solid white; box-shadow: 0 1px 2px rgba(0,0,0,0.2);"></div>
-    </div>
-    <style>@keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }</style>
-  `,
-    className: "current-user-marker",
-    iconSize: [24, 24],
-    iconAnchor: [12, 12],
-  });
-
-const createOtherUserMarkerIcon = () =>
-  L.divIcon({
-    html: `
-    <div style="background: linear-gradient(135deg, #ff5722, #d32f2f); width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 6px rgba(255, 193, 7, 0.4), 0 0 0 1px rgba(255, 235, 59, 0.3); display: flex; align-items: center; justify-content: center; animation: blink 1.5s ease-in-out infinite;">
-      <span style="font-size: 12px;">🚶</span>
-    </div>
-    <style>@keyframes blink { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.7; transform: scale(1.1); } }</style>
-  `,
-    className: "current-location-marker",
-    iconSize: [20, 20],
-    iconAnchor: [10, 10],
-  });
-
-// Haversine 공식을 사용한 정확한 거리 계산 (미터)
-function getDistanceInMeters(lat1, lng1, lat2, lng2) {
-  const R = 6371000; // 지구 반지름 (미터)
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a = 
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLng / 2) * Math.sin(dLng / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
-
-// 경로가 위험 지역과 교차하는지 확인
-function routeIntersectsDangerZone(routeCoords, dangerZones) {
-  if (!dangerZones || dangerZones.length === 0) return { intersects: false, count: 0 };
-  
-  let intersectionCount = 0;
-  const intersectedZones = [];
-  
-  for (const zone of dangerZones) {
-    let zoneIntersected = false;
-    
-    for (let i = 0; i < routeCoords.length; i++) {
-      const [lat, lng] = routeCoords[i];
-      const distance = getDistanceInMeters(lat, lng, zone.lat, zone.lng);
-      
-      if (distance <= zone.radius) {
-        zoneIntersected = true;
-        break;
-      }
-      
-      // 선분 검사: 두 점 사이의 중간 지점도 확인
-      if (i < routeCoords.length - 1) {
-        const [nextLat, nextLng] = routeCoords[i + 1];
-        const midLat = (lat + nextLat) / 2;
-        const midLng = (lng + nextLng) / 2;
-        const midDistance = getDistanceInMeters(midLat, midLng, zone.lat, zone.lng);
-        
-        if (midDistance <= zone.radius) {
-          zoneIntersected = true;
-          break;
-        }
-      }
-    }
-    
-    if (zoneIntersected) {
-      intersectedZones.push(zone);
-      intersectionCount++;
-    }
-  }
-  
-  return { intersects: intersectionCount > 0, count: intersectionCount, zones: intersectedZones };
-}
-
-// OSRM 길찾기 API 호출 (대안 경로 포함)
-async function getRoute(start, end, dangerZones = []) {
-  try {
-    const url = `https://router.project-osrm.org/route/v1/foot/${start.lng},${start.lat};${end.lng},${end.lat}?overview=full&geometries=geojson&alternatives=3`;
-    const res = await fetch(url);
-    const data = await res.json();
-    
-    if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
-      // 모든 경로를 평가
-      const routesWithSafety = data.routes.map(route => {
-        const coords = route.geometry.coordinates.map(([lng, lat]) => [lat, lng]);
-        const safety = routeIntersectsDangerZone(coords, dangerZones);
-        return {
-          ...route,
-          coords,
-          safety,
-          score: safety.count * 1000 + route.distance // 위험 지역 개수 + 거리
-        };
-      });
-      
-      // 가장 안전한 경로 선택 (위험 지역 적고 거리 짧은 순)
-      routesWithSafety.sort((a, b) => a.score - b.score);
-      
-      return routesWithSafety[0];
-    }
-    return null;
-  } catch (error) {
-    console.error('경로 검색 실패:', error);
-    return null;
-  }
-}
+import { getRoute } from "./utils/mapUtils";
+import { createUserMarkerIcon, createOtherUserMarkerIcon, createEmergencyIcon } from "./utils/markerIcons";
+import { DEFAULT_CENTER, MAP_TYPES, SAFEMAP_TOKEN } from "./constants/mapConfig";
+import { useMapState } from "./hooks/useMapState";
 
 // 지도 중심 업데이트 컴포넌트
 function MapUpdater({
@@ -243,30 +111,14 @@ function MapView({
   myLocationHistory,
   isRegistered,
 }) {
-  // 기본 중심점 (광주 시청)
-  const center = [35.1595, 126.8526];
-  const [mapType, setMapType] = useState("street");
-  const [showEmergency, setShowEmergency] = useState(true);
-  const [showTraffic, setShowTraffic] = useState(true);
-  const [showCrimeZones, setShowCrimeZones] = useState(true);
-  const [showSecurityFacilities, setShowSecurityFacilities] = useState(true);
-  const [showEmergencyBells, setShowEmergencyBells] = useState(false);
-  const [showWomenSafety, setShowWomenSafety] = useState(false);
-
-  const [showChildCrimeZones, setShowChildCrimeZones] = useState(false);
-  const [showMurderStats, setShowMurderStats] = useState(true);
-  const [showCCTV, setShowCCTV] = useState(false);
-  const [showMissingPersons, setShowMissingPersons] = useState(false);
-
-  useEffect(() => {
-    if (!isTracking) {
-      setShowMissingPersons(false);
-    }
-  }, [isTracking]);
+  const mapState = useMapState(isTracking);
+  const { mapType, setMapType, showEmergency, showTraffic, showCrimeZones, showSecurityFacilities,
+    showEmergencyBells, showWomenSafety, showChildCrimeZones, showMurderStats, showCCTV,
+    showMissingPersons, setShowMissingPersons, showMapButtons, setShowMapButtons } = mapState;
   const [missingPersonStatus, setMissingPersonStatus] = useState("");
   const [selectedCCTV, setSelectedCCTV] = useState(null);
   const [cctvList, setCctvList] = useState([]);
-  const [mapCenter, setMapCenter] = useState(center);
+  const [mapCenter, setMapCenter] = useState(DEFAULT_CENTER);
   const [mapBounds, setMapBounds] = useState(null);
   const [emergencyLocations, setEmergencyLocations] = useState({
     hospitals: [],
@@ -279,11 +131,11 @@ function MapView({
   const [analysisError, setAnalysisError] = useState(null);
   const [showSafetyTips, setShowSafetyTips] = useState(false);
   const [mapInstance, setMapInstance] = useState(null);
-  const [isMapRotating, setIsMapRotating] = useState(false);
-  const [showMapButtons, setShowMapButtons] = useState(true);
   const [destinationMarker, setDestinationMarker] = useState(null);
   const [routeCoordinates, setRouteCoordinates] = useState(null);
   const [routeInfo, setRouteInfo] = useState(null);
+  const [measureMode, setMeasureMode] = useState(false);
+  const [measurePoints, setMeasurePoints] = useState([]);
 
   // 실제 응급시설 API 호출
   const fetchEmergencyFacilities = useCallback(async () => {
@@ -453,32 +305,14 @@ function MapView({
     return () => clearInterval(interval);
   }, [showDangerZones, isTracking, analyzeCurrentDanger]);
 
-  const mapTypes = useMemo(
-    () => ({
-      street: {
-        url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      },
-      satellite: {
-        url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-        attribution: '&copy; <a href="https://www.esri.com/">Esri</a>',
-      },
-      detailed: {
-        url: "https://{s}.tile.openstreetmap.de/tiles/osmde/{z}/{x}/{y}.png",
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      },
-      terrain: {
-        url: "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png",
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tiles style by <a href="https://www.hotosm.org/" target="_blank">Humanitarian OpenStreetMap Team</a>',
-      },
-    }),
-    []
-  );
+
 
   const handleMapClick = useCallback(async (e) => {
+    if (measureMode) {
+      setMeasurePoints(prev => [...prev, { lat: e.latlng.lat, lng: e.latlng.lng }]);
+      return;
+    }
+    
     if (!currentLocation || !isTracking) return;
     
     const destination = { lat: e.latlng.lat, lng: e.latlng.lng };
@@ -493,13 +327,34 @@ function MapView({
         safety: route.safety
       });
     }
-  }, [currentLocation, isTracking, dangerAnalysis]);
+  }, [currentLocation, isTracking, dangerAnalysis, measureMode]);
 
   const clearRoute = useCallback(() => {
     setDestinationMarker(null);
     setRouteCoordinates(null);
     setRouteInfo(null);
   }, []);
+
+  const toggleMeasureMode = useCallback(() => {
+    setMeasureMode(prev => !prev);
+    setMeasurePoints([]);
+  }, []);
+
+  const calculateTotalDistance = useCallback(() => {
+    if (measurePoints.length < 2) return 0;
+    let total = 0;
+    for (let i = 0; i < measurePoints.length - 1; i++) {
+      const R = 6371000;
+      const dLat = (measurePoints[i + 1].lat - measurePoints[i].lat) * Math.PI / 180;
+      const dLng = (measurePoints[i + 1].lng - measurePoints[i].lng) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(measurePoints[i].lat * Math.PI / 180) * Math.cos(measurePoints[i + 1].lat * Math.PI / 180) *
+        Math.sin(dLng / 2) * Math.sin(dLng / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      total += R * c;
+    }
+    return total;
+  }, [measurePoints]);
 
   useEffect(() => {
     if (!isTracking) {
@@ -579,7 +434,7 @@ function MapView({
       )}
 
       {/* 길찾기 안내 */}
-      {isTracking && !destinationMarker && (
+      {isTracking && !destinationMarker && !measureMode && (
         <div
           style={{
             position: "absolute",
@@ -598,6 +453,52 @@ function MapView({
           }}
         >
           📍 길게 누르기 / 우클릭으로 길찾기
+        </div>
+      )}
+
+      {/* 거리 측정 안내 */}
+      {measureMode && (
+        <div
+          style={{
+            position: "absolute",
+            bottom: "10px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 999,
+            backgroundColor: "rgba(0, 0, 0, 0.75)",
+            padding: "8px 12px",
+            borderRadius: 6,
+            color: "#fff",
+            fontSize: "0.85rem",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.4)",
+            backdropFilter: "blur(4px)",
+            display: "flex",
+            flexDirection: "column",
+            gap: 4,
+            alignItems: "center",
+          }}
+        >
+          <div>📏 클릭하여 거리 측정</div>
+          {measurePoints.length > 0 && (
+            <div style={{ fontSize: "0.75rem", color: "#3b82f6" }}>
+              {measurePoints.length}개 지점 • {(calculateTotalDistance() / 1000).toFixed(2)}km
+            </div>
+          )}
+          <button
+            onClick={() => setMeasurePoints([])}
+            style={{
+              marginTop: 4,
+              padding: "4px 8px",
+              background: "#ef4444",
+              color: "white",
+              border: "none",
+              borderRadius: 4,
+              cursor: "pointer",
+              fontSize: "0.7rem"
+            }}
+          >
+            초기화
+          </button>
         </div>
       )}
 
@@ -809,6 +710,13 @@ function MapView({
             >
               🔔
             </button>
+            <button
+              className={`map-type-btn ${measureMode ? "active" : ""}`}
+              onClick={toggleMeasureMode}
+              title="거리 측정"
+            >
+              📏
+            </button>
           </>
         )}
       </div>
@@ -996,7 +904,7 @@ function MapView({
         </div>
       )}
 
-      <MapContainer center={center} zoom={14} className="map-container">
+      <MapContainer center={DEFAULT_CENTER} zoom={14} className="map-container">
         <MapUpdater
           currentLocation={currentLocation}
           locations={locations}
@@ -1008,8 +916,8 @@ function MapView({
         />
         <TileLayer
           key={mapType}
-          url={mapTypes[mapType].url}
-          attribution={mapTypes[mapType].attribution}
+          url={MAP_TYPES[mapType].url}
+          attribution={MAP_TYPES[mapType].attribution}
         />
 
         {/* 실시간 교통상황 레이어 */}
@@ -1195,12 +1103,7 @@ function MapView({
               <Marker
                 key={`hospital-${index}-${hospital.lat}-${hospital.lng}`}
                 position={[hospital.lat, hospital.lng]}
-                icon={L.divIcon({
-                  html: `<div style="background-color: #ff4444; width: 16px; height: 16px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-size: 8px;">🏥</div>`,
-                  className: "emergency-marker",
-                  iconSize: [16, 16],
-                  iconAnchor: [8, 8],
-                })}
+                icon={createEmergencyIcon("🏥", "#ff4444", 16)}
                 zIndexOffset={500}
               >
                 <Popup>
@@ -1224,12 +1127,7 @@ function MapView({
               <Marker
                 key={`police-${index}-${station.lat}-${station.lng}`}
                 position={[station.lat, station.lng]}
-                icon={L.divIcon({
-                  html: `<div style="background-color: #4444ff; width: 16px; height: 16px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-size: 8px;">🚔</div>`,
-                  className: "emergency-marker",
-                  iconSize: [16, 16],
-                  iconAnchor: [8, 8],
-                })}
+                icon={createEmergencyIcon("🚔", "#4444ff", 16)}
                 zIndexOffset={500}
               >
                 <Popup>
@@ -1253,12 +1151,7 @@ function MapView({
               <Marker
                 key={`station-${index}-${station.lat}-${station.lng}`}
                 position={[station.lat, station.lng]}
-                icon={L.divIcon({
-                  html: `<div style="background-color: #00aa44; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-size: 7px;">🛡️</div>`,
-                  className: "emergency-marker",
-                  iconSize: [14, 14],
-                  iconAnchor: [7, 7],
-                })}
+                icon={createEmergencyIcon("🛡️", "#00aa44", 14)}
                 zIndexOffset={400}
               >
                 <Popup>
@@ -1302,6 +1195,31 @@ function MapView({
             pathOptions={{ lineCap: 'round', lineJoin: 'round' }}
           />
         )}
+
+        {/* 거리 측정 선 */}
+        {measureMode && measurePoints.length > 1 && (
+          <Polyline
+            positions={measurePoints.map(p => [p.lat, p.lng])}
+            color="#3b82f6"
+            weight={4}
+            opacity={0.9}
+            pathOptions={{ lineCap: 'round', lineJoin: 'round' }}
+          />
+        )}
+
+        {/* 거리 측정 마커 */}
+        {measureMode && measurePoints.map((point, idx) => (
+          <Marker
+            key={`measure-${idx}`}
+            position={[point.lat, point.lng]}
+            icon={L.divIcon({
+              html: `<div style="background: #3b82f6; width: 22px; height: 22px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; color: white;">${idx + 1}</div>`,
+              iconSize: [22, 22],
+              iconAnchor: [11, 11],
+            })}
+            zIndexOffset={900}
+          />
+        ))}
 
         {/* 목적지 마커 */}
         {destinationMarker && (
@@ -1357,12 +1275,7 @@ function MapView({
           <Marker
             key={cctv.id}
             position={[cctv.lat, cctv.lng]}
-            icon={L.divIcon({
-              html: `<div style="background-color: #ff6600; width: 18px; height: 18px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-size: 10px;">📹</div>`,
-              className: "cctv-marker",
-              iconSize: [18, 18],
-              iconAnchor: [9, 9],
-            })}
+            icon={createEmergencyIcon("📹", "#ff6600", 18)}
             eventHandlers={{ click: () => setSelectedCCTV(cctv) }}
             zIndexOffset={600}
           >
