@@ -575,6 +575,19 @@ body::before {
   display: none !important;
 }
 
+/* 실종자 팝업 스타일 */
+.leaflet-popup-content-wrapper {
+  border: 2px solid #333 !important;
+  box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.3) !important;
+  border-radius: 4px !important;
+}
+
+.leaflet-popup-tip {
+  background: #333 !important;
+  border: 2px solid #333 !important;
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3) !important;
+}
+
 @media (max-width: 1024px) {
   .map-container {
     height: 300px;
@@ -830,7 +843,7 @@ p {
 }
 
 .chat-messages-container {
-  height: 150px;
+  height: 380px;
 }
 
 .ai-chat-messages-container {

@@ -39,11 +39,16 @@ npm install
 
 ```bash
 cp .env.example .env
-# .env 파일에서 VITE_SERVER_URL 수정
-
-# 로컬 서버 테스트용:
-# VITE_SERVER_URL=http://localhost:3000
+# .env 파일 수정:
+# VITE_SERVER_URL=http://localhost:3000 (로컬 테스트용)
+# VITE_SAFE182_ESNTL_ID=your_esntl_id (안전드림 API)
+# VITE_SAFE182_AUTH_KEY=your_auth_key (안전드림 API)
 ```
+
+**안전드림 API 키 발급:**
+1. https://www.safe182.go.kr 접속
+2. 공공데이터 API 신청
+3. 발급받은 esntlId와 authKey를 .env에 설정
 
 ### 3. 개발 서버 실행
 
@@ -68,7 +73,10 @@ https://safe-track-client.vercel.app/
 ### 프론트엔드 (Vercel)
 
 1. GitHub 저장소 연결
-2. 환경변수 설정: `VITE_SERVER_URL`
+2. 환경변수 설정:
+   - `VITE_SERVER_URL`
+   - `VITE_SAFE182_ESNTL_ID` (선택)
+   - `VITE_SAFE182_AUTH_KEY` (선택)
 3. 자동 배포
 
 ### 백엔드 (Render)
@@ -98,6 +106,7 @@ MIT License
 - 가상 이동 시뮬레이션 (광주 시청 → 상무역)
 - 다중 지도 타입 (일반/위성/상세/지형)
 - 응급시설 표시 (병원/경찰서/파출소)
+- 실종자 정보 표시 (안전드림 API 연동)
 
 ### 🤝 위치 공유
 
@@ -118,6 +127,15 @@ MIT License
 - 가짜 통화 (SOS 기능)
 - 푸시 알림
 - 레트로 UI/UX
+
+### 🔍 안전 정보
+
+- 실종자 정보 지도 표시 (안전드림 API)
+- 범죄주의구간 레이어
+- 여성밤길치안안전 정보
+- 어린이대상범죄주의구간
+- 치안사고통계 (살인)
+- 도로 CCTV 위치
 
 ## 사용법
 

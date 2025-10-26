@@ -11,7 +11,9 @@ import { useEffect, useState, useMemo, useCallback } from "react";
 import L from "leaflet";
 import Compass from "./components/Compass";
 import DangerZoneOverlay from "./components/DangerZoneOverlay";
+import MissingPersonMap from "./components/MissingPersonMap";
 import { analyzeDangerZones } from "./services/dangerPredictionService";
+import { fetchRoadCCTV } from "./data/publicCCTV";
 
 // 기본 마커 아이콘 설정
 delete L.Icon.Default.prototype._getIconUrl;
@@ -123,11 +125,22 @@ function MapView({
   const [showTraffic, setShowTraffic] = useState(true);
   const [showCrimeZones, setShowCrimeZones] = useState(true);
   const [showSecurityFacilities, setShowSecurityFacilities] = useState(true);
-  const [showEmergencyBells, setShowEmergencyBells] = useState(true);
+  const [showEmergencyBells, setShowEmergencyBells] = useState(false);
   const [showWomenSafety, setShowWomenSafety] = useState(false);
 
   const [showChildCrimeZones, setShowChildCrimeZones] = useState(false);
   const [showMurderStats, setShowMurderStats] = useState(true);
+  const [showCCTV, setShowCCTV] = useState(false);
+  const [showMissingPersons, setShowMissingPersons] = useState(false);
+
+  useEffect(() => {
+    if (!isTracking) {
+      setShowMissingPersons(false);
+    }
+  }, [isTracking]);
+  const [missingPersonStatus, setMissingPersonStatus] = useState("");
+  const [selectedCCTV, setSelectedCCTV] = useState(null);
+  const [cctvList, setCctvList] = useState([]);
   const [mapCenter, setMapCenter] = useState(center);
   const [mapBounds, setMapBounds] = useState(null);
   const [emergencyLocations, setEmergencyLocations] = useState({
@@ -206,6 +219,16 @@ function MapView({
   useEffect(() => {
     fetchEmergencyFacilities();
   }, [fetchEmergencyFacilities, mapType]);
+
+  useEffect(() => {
+    const loadCCTV = async () => {
+      if (showCCTV && mapBounds) {
+        const data = await fetchRoadCCTV(mapBounds);
+        setCctvList(data);
+      }
+    };
+    loadCCTV();
+  }, [showCCTV, mapBounds]);
 
   // AI 위험 지역 분석
   const analyzeCurrentDanger = useCallback(async () => {
@@ -409,6 +432,30 @@ function MapView({
         >
           🔪
         </button>
+
+        <button
+          className={`map-type-btn ${showCCTV ? "active" : ""}`}
+          onClick={() => setShowCCTV(!showCCTV)}
+          title="도로 CCTV"
+        >
+          📹
+        </button>
+
+        {/* 실종자 정보 버튼 */}
+        <button
+          className={`map-type-btn ${showMissingPersons ? "active" : ""}`}
+          onClick={() => setShowMissingPersons(!showMissingPersons)}
+          disabled={!isRegistered || !isTracking || missingPersonStatus.includes("로딩")}
+          title={
+            !isRegistered
+              ? "로그인이 필요합니다"
+              : !isTracking
+              ? "위치 추적을 먼저 시작하세요"
+              : "실종자 정보"
+          }
+        >
+          🔍
+        </button>
       </div>
 
       <div
@@ -461,6 +508,14 @@ function MapView({
           title={isRegistered ? "주요시설" : "로그인이 필요합니다"}
         >
           🏘️
+        </button>
+        <button
+          className={`map-type-btn ${showEmergencyBells ? "active" : ""}`}
+          onClick={() => setShowEmergencyBells(!showEmergencyBells)}
+          disabled={!isRegistered}
+          title={isRegistered ? "비상벨" : "로그인이 필요합니다"}
+        >
+          🔔
         </button>
       </div>
 
@@ -592,6 +647,31 @@ function MapView({
               표시되었습니다
             </div>
           )}
+        </div>
+      )}
+
+      {/* 실종자 정보 상태 표시 */}
+      {missingPersonStatus && (
+        <div
+          style={{
+            position: "absolute",
+            top: "10px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 10000,
+            backgroundColor: "rgba(42, 42, 42, 0.95)",
+            padding: "12px 20px",
+            borderRadius: "8px",
+            border: "2px solid #ffd700",
+            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.5)",
+            color: "#ffd700",
+            fontSize: "0.95rem",
+            fontWeight: "bold",
+            maxWidth: "400px",
+            textAlign: "center",
+          }}
+        >
+          {missingPersonStatus}
         </div>
       )}
 
@@ -818,7 +898,7 @@ function MapView({
           <>
             {emergencyLocations.hospitals.map((hospital, index) => (
               <Marker
-                key={`hospital-${hospital.lat}-${hospital.lng}`}
+                key={`hospital-${index}-${hospital.lat}-${hospital.lng}`}
                 position={[hospital.lat, hospital.lng]}
                 icon={L.divIcon({
                   html: `<div style="background-color: #ff4444; width: 16px; height: 16px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-size: 8px;">🏥</div>`,
@@ -847,7 +927,7 @@ function MapView({
 
             {emergencyLocations.police.map((station, index) => (
               <Marker
-                key={`police-${station.lat}-${station.lng}`}
+                key={`police-${index}-${station.lat}-${station.lng}`}
                 position={[station.lat, station.lng]}
                 icon={L.divIcon({
                   html: `<div style="background-color: #4444ff; width: 16px; height: 16px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-size: 8px;">🚔</div>`,
@@ -876,7 +956,7 @@ function MapView({
 
             {emergencyLocations.stations.map((station, index) => (
               <Marker
-                key={`station-${station.lat}-${station.lng}`}
+                key={`station-${index}-${station.lat}-${station.lng}`}
                 position={[station.lat, station.lng]}
                 icon={L.divIcon({
                   html: `<div style="background-color: #00aa44; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-size: 7px;">🛡️</div>`,
@@ -909,7 +989,66 @@ function MapView({
         {showDangerZones && dangerAnalysis && (
           <DangerZoneOverlay dangerZones={dangerAnalysis.dangerZones} />
         )}
+
+        {/* 실종자 정보 마커 */}
+        <MissingPersonMap 
+          showMissingPersons={showMissingPersons} 
+          onStatusChange={setMissingPersonStatus}
+          currentLocation={currentLocation}
+        />
+
+        {/* CCTV 마커 */}
+        {showCCTV && cctvList.map((cctv) => (
+          <Marker
+            key={cctv.id}
+            position={[cctv.lat, cctv.lng]}
+            icon={L.divIcon({
+              html: `<div style="background-color: #ff6600; width: 18px; height: 18px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-size: 10px;">📹</div>`,
+              className: "cctv-marker",
+              iconSize: [18, 18],
+              iconAnchor: [9, 9],
+            })}
+            eventHandlers={{ click: () => setSelectedCCTV(cctv) }}
+            zIndexOffset={600}
+          >
+            <Popup>
+              <strong>📹 {cctv.name}</strong>
+              <br />
+              <div style={{ fontSize: "0.9em", marginTop: "4px" }}>
+                <div>형식: {cctv.format}</div>
+                {cctv.resolution && <div>해상도: {cctv.resolution}</div>}
+                <button
+                  onClick={() => setSelectedCCTV(cctv)}
+                  style={{ marginTop: "8px", padding: "6px 12px", background: "#ff6600", color: "white", border: "none", borderRadius: "4px", cursor: "pointer", fontSize: "0.9em" }}
+                >
+                  실시간 보기
+                </button>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
       </MapContainer>
+
+      {selectedCCTV && (
+        <div className="modal-overlay" onClick={() => setSelectedCCTV(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "800px" }}>
+            <div className="modal-header">
+              <h3>📹 {selectedCCTV.name}</h3>
+              <button className="modal-close" onClick={() => setSelectedCCTV(null)}>×</button>
+            </div>
+            <div className="modal-body" style={{ padding: "0", maxHeight: "none" }}>
+              <video controls autoPlay style={{ width: "100%", height: "450px", background: "#000" }}>
+                <source src={selectedCCTV.streamUrl} type="application/x-mpegURL" />
+                브라우저가 HLS를 지원하지 않습니다.
+              </video>
+              <div style={{ padding: "16px", color: "#e0e0e0" }}>
+                <p style={{ margin: "0", fontSize: "1rem" }}>형식: {selectedCCTV.format}</p>
+                {selectedCCTV.resolution && <p style={{ margin: "4px 0 0 0", fontSize: "1rem" }}>해상도: {selectedCCTV.resolution}</p>}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -124,6 +124,30 @@ export const useLocationTracking = (socket, userId, setLocations) => {
   }, [socket, userId, setLocations])
 
   /**
+   * 지역 테스트 시뮬레이션
+   */
+  const startLocationSimulation = useCallback((startLat, startLng) => {
+    if (!socket || !userId) return;
+
+    socket.emit('startTracking', { userId });
+    setIsTracking(true);
+    setIsSimulating(true);
+    saveAppState.isTracking('true');
+    saveAppState.isSimulating('true');
+    speechService.notifyTrackingStarted();
+
+    socket.emit('locationUpdate', { userId, lat: startLat, lng: startLng });
+    const newLocation = { lat: startLat, lng: startLng };
+    setCurrentLocation(newLocation);
+    saveAppState.currentLocation(newLocation);
+  }, [socket, userId]);
+
+  // 전역에서 접근 가능하도록 설정
+  if (typeof window !== 'undefined') {
+    window.startLocationSimulation = startLocationSimulation;
+  }
+
+  /**
    * 시뮬레이션 모드 시작 (테스트용)
    */
   const startSimulation = useCallback(() => {

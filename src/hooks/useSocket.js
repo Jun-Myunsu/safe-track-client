@@ -241,9 +241,10 @@ export function useSocket(handlers) {
         setTimeout(() => handlers.setStatus(''), 3000)
       },
       restoreState: (data) => {
-        // 공유 상태 복원 (서버 상태가 단일 진실의 원천)
         const sharedUsers = data.sharedUsers || []
         const receivedShares = data.receivedShares || []
+
+        console.log('🔄 restoreState 수신:', { sharedUsers, receivedShares })
 
         handlers.setSharedUsers(sharedUsers)
         localStorage.setItem('safetrack_sharedUsers', JSON.stringify(sharedUsers))
@@ -251,9 +252,7 @@ export function useSocket(handlers) {
         handlers.setReceivedShares(receivedShares)
         localStorage.setItem('safetrack_receivedShares', JSON.stringify(receivedShares))
 
-        // 추적 상태는 서버에서 항상 false로 복원됨 (수동 시작 필요)
         if (data.isTracking !== undefined && handlers.setIsTracking) {
-          // 클라이언트 상태도 서버와 동기화
           if (!data.isTracking && (handlers.isTracking || handlers.isSimulating)) {
             handlers.stopTracking()
           }
