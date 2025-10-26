@@ -18,6 +18,7 @@ export const useAuth = (socket, setStatus) => {
   const [isLoginMode, setIsLoginMode] = useState(true)
   const [userIdAvailable, setUserIdAvailable] = useState(null)
   const [isCheckingUserId, setIsCheckingUserId] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   /**
    * 사용자 ID 중복 확인
@@ -141,6 +142,7 @@ export const useAuth = (socket, setStatus) => {
     isLoginMode,
     userIdAvailable,
     isCheckingUserId,
+    isAdmin,
 
     // 상태 변경 함수
     setIsRegistered,
@@ -149,6 +151,7 @@ export const useAuth = (socket, setStatus) => {
     setIsLoginMode,
     setUserIdAvailable,
     setIsCheckingUserId,
+    setIsAdmin,
 
     // 액션 함수
     checkUserId,

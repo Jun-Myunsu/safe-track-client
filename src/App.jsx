@@ -108,6 +108,7 @@ function App() {
     isRegistered: auth.isRegistered,
     userId: auth.userId,
     setUserId: auth.setUserId,
+    setIsAdmin: auth.setIsAdmin,
     setUsers,
     setLocations,
     setUserPaths,
@@ -138,7 +139,7 @@ function App() {
     <div className="container">
       <div className="content-grid">
         <div className="sidebar">
-          {auth.userId === 'msjun' && auth.isRegistered && (
+          {auth.isAdmin && auth.isRegistered && (
             <StuckUsersPanel />
           )}
 
@@ -185,6 +186,7 @@ function App() {
                 startTracking={tracking.startTracking}
                 stopTracking={tracking.stopTracking}
                 startSimulation={tracking.startSimulation}
+                isAdmin={auth.isAdmin}
               />
             </div>
           )}

@@ -179,6 +179,9 @@ export function useSocket(handlers) {
       },
       registerSuccess: (data) => {
         handlers.setIsRegistered(true)
+        if (handlers.setIsAdmin && data.isAdmin !== undefined) {
+          handlers.setIsAdmin(data.isAdmin)
+        }
         handlers.setStatus(`✅ ${data.userId}로 등록 완료`)
         
         // 세션 저장
@@ -193,6 +196,9 @@ export function useSocket(handlers) {
       },
       loginSuccess: (data) => {
         handlers.setIsRegistered(true)
+        if (handlers.setIsAdmin && data.isAdmin !== undefined) {
+          handlers.setIsAdmin(data.isAdmin)
+        }
         
         // 세션 저장
         localStorage.setItem('safetrack_sessionId', data.sessionId)
@@ -213,6 +219,9 @@ export function useSocket(handlers) {
       },
       sessionValid: (data) => {
         handlers.setIsRegistered(true)
+        if (handlers.setIsAdmin && data.isAdmin !== undefined) {
+          handlers.setIsAdmin(data.isAdmin)
+        }
         // userId 설정
         if (data.userId && handlers.setUserId) {
           handlers.setUserId(data.userId)

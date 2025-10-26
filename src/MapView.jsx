@@ -155,6 +155,7 @@ function MapView({
   const [showSafetyTips, setShowSafetyTips] = useState(false);
   const [mapInstance, setMapInstance] = useState(null);
   const [isMapRotating, setIsMapRotating] = useState(false);
+  const [showMapButtons, setShowMapButtons] = useState(true);
 
   // 실제 응급시설 API 호출
   const fetchEmergencyFacilities = useCallback(async () => {
@@ -364,99 +365,101 @@ function MapView({
       </div>
 
       {/* AI 위험 분석 버튼 (지도 버튼 왼쪽) */}
-      <div
-        style={{
-          position: "absolute",
-          top: "10px",
-          right: "46px",
-          zIndex: 1000,
-          display: "flex",
-          flexDirection: "column",
-          gap: "6px",
-        }}
-      >
-        <button
-          className={`map-type-btn ${showDangerZones ? "active" : ""}`}
-          onClick={() => setShowDangerZones(!showDangerZones)}
-          disabled={!isTracking}
-          title={isTracking ? "AI 위험 분석 토글" : "위치 추적을 시작하세요"}
+      {showMapButtons && (
+        <div
+          style={{
+            position: "absolute",
+            top: "10px",
+            right: "46px",
+            zIndex: 1000,
+            display: "flex",
+            flexDirection: "column",
+            gap: "6px",
+          }}
         >
-          🤖
-        </button>
-
-        {/* 안전 팁 알림 버튼 */}
-        {showDangerZones && dangerAnalysis && (
           <button
-            className={`map-type-btn ${showSafetyTips ? "active" : ""}`}
-            onClick={() => setShowSafetyTips(!showSafetyTips)}
-            title="안전 팁 보기"
-            style={{
-              backgroundColor:
-                dangerAnalysis.overallRiskLevel === "high"
-                  ? "rgba(255, 51, 51, 0.9)"
-                  : dangerAnalysis.overallRiskLevel === "medium"
-                  ? "rgba(255, 136, 0, 0.9)"
-                  : "rgba(255, 100, 100, 0.85)",
-            }}
+            className={`map-type-btn ${showDangerZones ? "active" : ""}`}
+            onClick={() => setShowDangerZones(!showDangerZones)}
+            disabled={!isTracking}
+            title={isTracking ? "AI 위험 분석 토글" : "위치 추적을 시작하세요"}
           >
-            💡
+            🤖
           </button>
-        )}
 
-        {/* 여성밤길치안안전 버튼 */}
-        <button
-          className={`map-type-btn ${showWomenSafety ? "active" : ""}`}
-          onClick={() => setShowWomenSafety(!showWomenSafety)}
-          disabled={!isRegistered}
-          title={isRegistered ? "밤길치안안전" : "로그인이 필요합니다"}
-        >
-          🌙
-        </button>
+          {/* 안전 팁 알림 버튼 */}
+          {showDangerZones && dangerAnalysis && (
+            <button
+              className={`map-type-btn ${showSafetyTips ? "active" : ""}`}
+              onClick={() => setShowSafetyTips(!showSafetyTips)}
+              title="안전 팁 보기"
+              style={{
+                backgroundColor:
+                  dangerAnalysis.overallRiskLevel === "high"
+                    ? "rgba(255, 51, 51, 0.9)"
+                    : dangerAnalysis.overallRiskLevel === "medium"
+                    ? "rgba(255, 136, 0, 0.9)"
+                    : "rgba(255, 100, 100, 0.85)",
+              }}
+            >
+              💡
+            </button>
+          )}
 
-        {/* 어린이대상범죄주의구간 버튼 */}
-        <button
-          className={`map-type-btn ${showChildCrimeZones ? "active" : ""}`}
-          onClick={() => setShowChildCrimeZones(!showChildCrimeZones)}
-          disabled={!isRegistered}
-          title={isRegistered ? "어린이대상범죄주의구간" : "로그인이 필요합니다"}
-        >
-          ⚠️
-        </button>
+          {/* 여성밤길치안안전 버튼 */}
+          <button
+            className={`map-type-btn ${showWomenSafety ? "active" : ""}`}
+            onClick={() => setShowWomenSafety(!showWomenSafety)}
+            disabled={!isRegistered}
+            title={isRegistered ? "밤길치안안전" : "로그인이 필요합니다"}
+          >
+            🌙
+          </button>
 
-        {/* 치안사고통계(살인) 버튼 */}
-        <button
-          className={`map-type-btn ${showMurderStats ? "active" : ""}`}
-          onClick={() => setShowMurderStats(!showMurderStats)}
-          disabled={!isRegistered}
-          title={isRegistered ? "치안사고통계(살인)" : "로그인이 필요합니다"}
-        >
-          🔪
-        </button>
+          {/* 어린이대상범죄주의구간 버튼 */}
+          <button
+            className={`map-type-btn ${showChildCrimeZones ? "active" : ""}`}
+            onClick={() => setShowChildCrimeZones(!showChildCrimeZones)}
+            disabled={!isRegistered}
+            title={isRegistered ? "어린이대상범죄주의구간" : "로그인이 필요합니다"}
+          >
+            ⚠️
+          </button>
 
-        <button
-          className={`map-type-btn ${showCCTV ? "active" : ""}`}
-          onClick={() => setShowCCTV(!showCCTV)}
-          title="도로 CCTV"
-        >
-          📹
-        </button>
+          {/* 치안사고통계(살인) 버튼 */}
+          <button
+            className={`map-type-btn ${showMurderStats ? "active" : ""}`}
+            onClick={() => setShowMurderStats(!showMurderStats)}
+            disabled={!isRegistered}
+            title={isRegistered ? "치안사고통계(살인)" : "로그인이 필요합니다"}
+          >
+            🔪
+          </button>
 
-        {/* 실종자 정보 버튼 */}
-        <button
-          className={`map-type-btn ${showMissingPersons ? "active" : ""}`}
-          onClick={() => setShowMissingPersons(!showMissingPersons)}
-          disabled={!isRegistered || !isTracking || missingPersonStatus.includes("로딩")}
-          title={
-            !isRegistered
-              ? "로그인이 필요합니다"
-              : !isTracking
-              ? "위치 추적을 먼저 시작하세요"
-              : "실종자 정보"
-          }
-        >
-          🔍
-        </button>
-      </div>
+          <button
+            className={`map-type-btn ${showCCTV ? "active" : ""}`}
+            onClick={() => setShowCCTV(!showCCTV)}
+            title="도로 CCTV"
+          >
+            📹
+          </button>
+
+          {/* 실종자 정보 버튼 */}
+          <button
+            className={`map-type-btn ${showMissingPersons ? "active" : ""}`}
+            onClick={() => setShowMissingPersons(!showMissingPersons)}
+            disabled={!isRegistered || !isTracking || missingPersonStatus.includes("로딩")}
+            title={
+              !isRegistered
+                ? "로그인이 필요합니다"
+                : !isTracking
+                ? "위치 추적을 먼저 시작하세요"
+                : "실종자 정보"
+            }
+          >
+            🔍
+          </button>
+        </div>
+      )}
 
       <div
         style={{
@@ -470,53 +473,58 @@ function MapView({
         }}
       >
         <button
-          className={`map-type-btn ${mapType === "street" ? "active" : ""}`}
-          onClick={() => setMapType("street")}
+          className="map-type-btn"
+          onClick={() => setShowMapButtons(!showMapButtons)}
+          title="메뉴"
         >
-          🗺️
+          ☰
         </button>
-        <button
-          className={`map-type-btn ${mapType === "satellite" ? "active" : ""}`}
-          onClick={() => setMapType("satellite")}
-        >
-          🛰️
-        </button>
-        <button
-          className={`map-type-btn ${mapType === "detailed" ? "active" : ""}`}
-          onClick={() => setMapType("detailed")}
-        >
-          🏢
-        </button>
-        <button
-          className={`map-type-btn ${mapType === "terrain" ? "active" : ""}`}
-          onClick={() => setMapType("terrain")}
-        >
-          ⛰️
-        </button>
-        <button
-          className={`map-type-btn ${showEmergency ? "active" : ""}`}
-          onClick={() => setShowEmergency(!showEmergency)}
-          disabled={!isRegistered}
-          title={isRegistered ? "응급시설" : "로그인이 필요합니다"}
-        >
-          🚨
-        </button>
-        <button
-          className={`map-type-btn ${showTraffic ? "active" : ""}`}
-          onClick={() => setShowTraffic(!showTraffic)}
-          disabled={!isRegistered}
-          title={isRegistered ? "주요시설" : "로그인이 필요합니다"}
-        >
-          🏘️
-        </button>
-        <button
-          className={`map-type-btn ${showEmergencyBells ? "active" : ""}`}
-          onClick={() => setShowEmergencyBells(!showEmergencyBells)}
-          disabled={!isRegistered}
-          title={isRegistered ? "비상벨" : "로그인이 필요합니다"}
-        >
-          🔔
-        </button>
+        {showMapButtons && (
+          <>
+            <button
+              className="map-type-btn active"
+              onClick={() => {
+                const types = ["street", "satellite", "detailed", "terrain"];
+                const currentIndex = types.indexOf(mapType);
+                const nextIndex = (currentIndex + 1) % types.length;
+                setMapType(types[nextIndex]);
+              }}
+              title={
+                mapType === "street" ? "일반 지도" :
+                mapType === "satellite" ? "위성 지도" :
+                mapType === "detailed" ? "상세 지도" : "지형 지도"
+              }
+            >
+              {mapType === "street" ? "🗺️" :
+               mapType === "satellite" ? "🛰️" :
+               mapType === "detailed" ? "🏢" : "⛰️"}
+            </button>
+            <button
+              className={`map-type-btn ${showEmergency ? "active" : ""}`}
+              onClick={() => setShowEmergency(!showEmergency)}
+              disabled={!isRegistered}
+              title={isRegistered ? "응급시설" : "로그인이 필요합니다"}
+            >
+              🚨
+            </button>
+            <button
+              className={`map-type-btn ${showTraffic ? "active" : ""}`}
+              onClick={() => setShowTraffic(!showTraffic)}
+              disabled={!isRegistered}
+              title={isRegistered ? "주요시설" : "로그인이 필요합니다"}
+            >
+              🏘️
+            </button>
+            <button
+              className={`map-type-btn ${showEmergencyBells ? "active" : ""}`}
+              onClick={() => setShowEmergencyBells(!showEmergencyBells)}
+              disabled={!isRegistered}
+              title={isRegistered ? "비상벨" : "로그인이 필요합니다"}
+            >
+              🔔
+            </button>
+          </>
+        )}
       </div>
 
       {/* 안전 팁 팝업 */}

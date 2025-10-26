@@ -15,6 +15,7 @@ function LocationTracking({
   startTracking,
   stopTracking,
   startSimulation,
+  isAdmin,
 }) {
   const [showLocationTest, setShowLocationTest] = useState(false);
 
@@ -36,24 +37,30 @@ function LocationTracking({
         >
           {isTracking && !isSimulating ? "🔴 추적 중지" : "📍 위치 추적"}
         </button>
-
-        <button
-          className={`btn btn-tracking ${isSimulating ? "active" : ""}`}
-          onClick={isSimulating ? stopTracking : startSimulation}
-          disabled={!isRegistered || (isTracking && !isSimulating)}
-        >
-          {isSimulating ? "🔴 추적 중지" : "🧪 테스트"}
-        </button>
       </div>
 
-      <button
-        className="btn"
-        onClick={() => setShowLocationTest(!showLocationTest)}
-        disabled={!isRegistered || isTracking || isSimulating}
-        style={{ width: "100%", marginTop: "8px" }}
-      >
-        📍 지역 테스트 {showLocationTest ? "▲" : "▼"}
-      </button>
+      {isAdmin && (
+        <>
+          <div className="btn-group" style={{ marginTop: "8px" }}>
+            <button
+              className={`btn btn-tracking ${isSimulating ? "active" : ""}`}
+              onClick={isSimulating ? stopTracking : startSimulation}
+              disabled={!isRegistered || (isTracking && !isSimulating)}
+            >
+              {isSimulating ? "🔴 추적 중지" : "🧪 이동 테스트"}
+            </button>
+          </div>
+
+          <button
+            className="btn"
+            onClick={() => setShowLocationTest(!showLocationTest)}
+            disabled={!isRegistered || isTracking || isSimulating}
+            style={{ width: "100%", marginTop: "8px" }}
+          >
+            📍 지역 테스트 {showLocationTest ? "▲" : "▼"}
+          </button>
+        </>
+      )}
 
       {showLocationTest && (
         <div style={{ marginTop: "8px", display: "flex", flexDirection: "column", gap: "4px" }}>
