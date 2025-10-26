@@ -28,3 +28,10 @@ Thumbs.db
 
 # Server directory
 safe-track-server/
+
+# Docs - exclude all except PRD.md, TRD.md, pdf, pptx
+docs/
+!docs/PRD.md
+!docs/TRD.md
+!docs/*.pdf
+!docs/*.pptx
