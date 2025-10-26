@@ -540,6 +540,44 @@ function MapView({
         <Compass />
       </div>
 
+      {/* 내 위치로 버튼 */}
+      {isTracking && currentLocation && mapInstance && (
+        <button
+          onClick={() => {
+            mapInstance.setView([currentLocation.lat, currentLocation.lng], 16);
+          }}
+          style={{
+            position: "absolute",
+            bottom: "10px",
+            right: "10px",
+            zIndex: 999,
+            width: "40px",
+            height: "40px",
+            borderRadius: "50%",
+            border: "2px solid rgba(255, 255, 255, 0.9)",
+            background: "rgba(255, 255, 255, 0.95)",
+            boxShadow: "0 2px 6px rgba(0, 0, 0, 0.3)",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "1.2rem",
+            transition: "all 0.2s ease",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = "scale(1.1)";
+            e.currentTarget.style.boxShadow = "0 3px 8px rgba(0, 0, 0, 0.4)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "scale(1)";
+            e.currentTarget.style.boxShadow = "0 2px 6px rgba(0, 0, 0, 0.3)";
+          }}
+          title="내 위치로"
+        >
+          <span style={{ color: "#3b82f6" }}>📍</span>
+        </button>
+      )}
+
       {/* 길찾기 안내 */}
       {isTracking && !destinationMarker && (
         <div
