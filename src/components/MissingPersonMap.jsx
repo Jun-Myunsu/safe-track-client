@@ -150,10 +150,15 @@ export default function MissingPersonMap({ showMissingPersons, onStatusChange, c
           const bounds = L.latLngBounds(out.map(p => [p.lat, p.lng]));
           map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
         }, 100);
+        onStatusChange?.(`✅ ${out.length}건의 실종자 정보를 지도에 표시했습니다`);
+        setTimeout(() => onStatusChange?.(""), 3000);
+      } else {
+        onStatusChange?.("현재 지도 영역에 실종자 정보가 없습니다.");
+        setTimeout(() => {
+          onStatusChange?.("");
+          window.dispatchEvent(new CustomEvent('resetMissingPersons'));
+        }, 2000);
       }
-      
-      onStatusChange?.(`✅ ${out.length}건의 실종자 정보를 지도에 표시했습니다`);
-      setTimeout(() => onStatusChange?.(""), 3000);
     } catch (e) {
       console.error("실종자 정보 로드 실패:", e);
       setError(e.message);

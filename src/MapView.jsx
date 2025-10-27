@@ -1,5 +1,5 @@
 import { MapContainer, TileLayer, WMSTileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import L from "leaflet";
 import Compass from "./components/Compass";
 import DangerZoneOverlay from "./components/DangerZoneOverlay";
@@ -112,11 +112,17 @@ function MapView({
   isRegistered,
 }) {
   const mapState = useMapState(isTracking);
-  const { mapType, setMapType, showEmergency, showTraffic, showCrimeZones, showSecurityFacilities,
-    showEmergencyBells, showWomenSafety, showChildCrimeZones, showMurderStats, showCCTV,
-    showMissingPersons, setShowMissingPersons, showMapButtons, setShowMapButtons } = mapState;
+  const { mapType, setMapType, showEmergency, setShowEmergency, showTraffic, setShowTraffic, 
+    showCrimeZones, setShowCrimeZones, showSecurityFacilities, setShowSecurityFacilities,
+    showEmergencyBells, setShowEmergencyBells, showWomenSafety, setShowWomenSafety, 
+    showChildCrimeZones, setShowChildCrimeZones, showMurderStats, setShowMurderStats, 
+    showCCTV, setShowCCTV, showMissingPersons, setShowMissingPersons, 
+    showMapButtons, setShowMapButtons } = mapState;
   const [missingPersonStatus, setMissingPersonStatus] = useState("");
+  const [cctvStatus, setCctvStatus] = useState("");
   const [selectedCCTV, setSelectedCCTV] = useState(null);
+  const videoRef = useRef(null);
+  const hlsRef = useRef(null);
   const [cctvList, setCctvList] = useState([]);
   const [mapCenter, setMapCenter] = useState(DEFAULT_CENTER);
   const [mapBounds, setMapBounds] = useState(null);
@@ -204,12 +210,91 @@ function MapView({
   useEffect(() => {
     const loadCCTV = async () => {
       if (showCCTV && mapBounds) {
+        setCctvStatus('📹 CCTV 로드 중...');
+        console.log('현재 지도 영역:', {
+          서: mapBounds.getWest().toFixed(4),
+          동: mapBounds.getEast().toFixed(4),
+          남: mapBounds.getSouth().toFixed(4),
+          북: mapBounds.getNorth().toFixed(4)
+        });
         const data = await fetchRoadCCTV(mapBounds);
+        console.log(`${data.length}개 CCTV 로드 완료`);
         setCctvList(data);
+        if (data.length === 0) {
+          setCctvStatus('현재 지도 영역에 CCTV가 없습니다.');
+          setTimeout(() => {
+            setCctvStatus('');
+            setShowCCTV(false);
+          }, 2000);
+        } else {
+          setCctvStatus('');
+        }
+      } else {
+        setCctvList([]);
+        setCctvStatus('');
       }
     };
     loadCCTV();
-  }, [showCCTV, mapBounds]);
+  }, [showCCTV]);
+
+  // HLS.js 초기화
+  useEffect(() => {
+    if (!selectedCCTV || !selectedCCTV.streamUrl || !videoRef.current) return;
+
+    const video = videoRef.current;
+    const url = selectedCCTV.streamUrl;
+    console.log('CCTV 스트림 로드:', url);
+
+    if (window.Hls && window.Hls.isSupported()) {
+      console.log('HLS.js 사용');
+      const hls = new window.Hls({
+        enableWorker: true,
+        lowLatencyMode: true,
+        backBufferLength: 90,
+        debug: false
+      });
+      hlsRef.current = hls;
+      hls.loadSource(url);
+      hls.attachMedia(video);
+      hls.on(window.Hls.Events.MANIFEST_PARSED, () => {
+        console.log('HLS 매니페스트 파싱 성공');
+        video.play().catch(e => console.log('재생 실패:', e));
+      });
+      hls.on(window.Hls.Events.ERROR, (event, data) => {
+        console.error('HLS 에러:', data.type, data.details, data.fatal);
+        if (data.fatal) {
+          switch(data.type) {
+            case window.Hls.ErrorTypes.NETWORK_ERROR:
+              console.error('네트워크 에러 - 재시도');
+              hls.startLoad();
+              break;
+            case window.Hls.ErrorTypes.MEDIA_ERROR:
+              console.error('미디어 에러 - 복구 시도');
+              hls.recoverMediaError();
+              break;
+            default:
+              console.error('복구 불가능한 에러');
+              break;
+          }
+        }
+      });
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      console.log('네이티브 HLS 사용 (Safari)');
+      video.src = url;
+      video.addEventListener('loadedmetadata', () => {
+        video.play().catch(e => console.log('재생 실패:', e));
+      });
+    } else {
+      console.error('HLS 지원되지 않는 브라우저');
+    }
+
+    return () => {
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+        hlsRef.current = null;
+      }
+    };
+  }, [selectedCCTV]);
 
   // AI 위험 지역 분석
   const analyzeCurrentDanger = useCallback(async () => {
@@ -286,12 +371,16 @@ function MapView({
       setAnalysisError(null);
     };
 
+    const handleResetMissingPersons = () => {
+      setShowMissingPersons(false);
+    };
+
     window.addEventListener("clearDangerAnalysis", handleClearDangerAnalysis);
-    return () =>
-      window.removeEventListener(
-        "clearDangerAnalysis",
-        handleClearDangerAnalysis
-      );
+    window.addEventListener("resetMissingPersons", handleResetMissingPersons);
+    return () => {
+      window.removeEventListener("clearDangerAnalysis", handleClearDangerAnalysis);
+      window.removeEventListener("resetMissingPersons", handleResetMissingPersons);
+    };
   }, []);
 
   // 10분마다 위험 분석 업데이트 (추적 중일 때만)
@@ -362,24 +451,7 @@ function MapView({
     }
   }, [isTracking, clearRoute]);
 
-  useEffect(() => {
-    const updateRouteInfo = async () => {
-      if (!destinationMarker || !currentLocation || !isTracking || !routeCoordinates) return;
-      
-      const route = await getRoute(currentLocation, destinationMarker, dangerAnalysis?.dangerZones || []);
-      if (route) {
-        setRouteInfo({
-          distance: (route.distance / 1000).toFixed(2),
-          duration: Math.round(route.duration / 60),
-          safety: route.safety
-        });
-      }
-    };
-    
-    if (routeCoordinates) {
-      updateRouteInfo();
-    }
-  }, [currentLocation]);
+
 
   return (
     <div style={{ position: "relative" }}>
@@ -624,8 +696,13 @@ function MapView({
 
           <button
             className={`map-type-btn ${showCCTV ? "active" : ""}`}
-            onClick={() => setShowCCTV(!showCCTV)}
-            title="도로 CCTV"
+            onClick={() => {
+              const newState = !showCCTV;
+              setShowCCTV(newState);
+              if (!newState) setCctvList([]);
+            }}
+            disabled={!isRegistered}
+            title={isRegistered ? "도로 CCTV" : "로그인이 필요합니다"}
           >
             📹
           </button>
@@ -849,6 +926,31 @@ function MapView({
               표시되었습니다
             </div>
           )}
+        </div>
+      )}
+
+      {/* CCTV 상태 표시 */}
+      {cctvStatus && (
+        <div
+          style={{
+            position: "absolute",
+            top: "10px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 10000,
+            backgroundColor: "rgba(42, 42, 42, 0.95)",
+            padding: "12px 20px",
+            borderRadius: "8px",
+            border: "2px solid #ff6600",
+            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.5)",
+            color: "#ff6600",
+            fontSize: "0.95rem",
+            fontWeight: "bold",
+            maxWidth: "400px",
+            textAlign: "center",
+          }}
+        >
+          {cctvStatus}
         </div>
       )}
 
@@ -1275,15 +1377,19 @@ function MapView({
           <Marker
             key={cctv.id}
             position={[cctv.lat, cctv.lng]}
-            icon={createEmergencyIcon("📹", "#ff6600", 18)}
-            eventHandlers={{ click: () => setSelectedCCTV(cctv) }}
+            icon={L.divIcon({
+              html: `<div style="background: #ff6600; width: 22px; height: 22px; border-radius: 5px; border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; font-size: 13px; transform: rotate(-15deg);">📹</div>`,
+              iconSize: [22, 22],
+              iconAnchor: [11, 11],
+              className: 'cctv-marker'
+            })}
             zIndexOffset={600}
           >
             <Popup>
               <strong>📹 {cctv.name}</strong>
               <br />
               <div style={{ fontSize: "0.9em", marginTop: "4px" }}>
-                <div>형식: {cctv.format}</div>
+                <div>형식: {cctv.format || 'N/A'}</div>
                 {cctv.resolution && <div>해상도: {cctv.resolution}</div>}
                 <button
                   onClick={() => setSelectedCCTV(cctv)}
@@ -1298,22 +1404,48 @@ function MapView({
       </MapContainer>
 
       {selectedCCTV && (
-        <div className="modal-overlay" onClick={() => setSelectedCCTV(null)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "800px" }}>
-            <div className="modal-header">
-              <h3>📹 {selectedCCTV.name}</h3>
-              <button className="modal-close" onClick={() => setSelectedCCTV(null)}>×</button>
+        <div className="modal-overlay" onClick={() => {
+          if (hlsRef.current) {
+            hlsRef.current.destroy();
+            hlsRef.current = null;
+          }
+          setSelectedCCTV(null);
+        }}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ 
+            maxWidth: "900px", 
+            width: window.innerWidth <= 768 ? "95vw" : "auto",
+            padding: 0, 
+            overflow: "hidden" 
+          }}>
+            <div className="modal-header" style={{ padding: "12px 20px", margin: 0 }}>
+              <h3 style={{ margin: 0, fontSize: "1.1rem" }}>📹 {selectedCCTV.name}</h3>
+              <button className="modal-close" onClick={() => {
+                if (hlsRef.current) {
+                  hlsRef.current.destroy();
+                  hlsRef.current = null;
+                }
+                setSelectedCCTV(null);
+              }}>×</button>
             </div>
-            <div className="modal-body" style={{ padding: "0", maxHeight: "none" }}>
-              <video controls autoPlay style={{ width: "100%", height: "450px", background: "#000" }}>
-                <source src={selectedCCTV.streamUrl} type="application/x-mpegURL" />
-                브라우저가 HLS를 지원하지 않습니다.
-              </video>
-              <div style={{ padding: "16px", color: "#e0e0e0" }}>
-                <p style={{ margin: "0", fontSize: "1rem" }}>형식: {selectedCCTV.format}</p>
-                {selectedCCTV.resolution && <p style={{ margin: "4px 0 0 0", fontSize: "1rem" }}>해상도: {selectedCCTV.resolution}</p>}
+            {selectedCCTV.streamUrl ? (
+              <video
+                ref={videoRef}
+                controls
+                autoPlay
+                playsInline
+                muted
+                style={{ 
+                  width: "100%", 
+                  height: window.innerWidth <= 768 ? "50vh" : "500px", 
+                  display: "block", 
+                  background: "#000" 
+                }}
+              />
+            ) : (
+              <div style={{ padding: "40px", textAlign: "center", color: "#aaa" }}>
+                <p>⚠️ 실시간 영상을 사용할 수 없습니다.</p>
               </div>
-            </div>
+            )}
           </div>
         </div>
       )}

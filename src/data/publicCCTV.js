@@ -1,24 +1,16 @@
-// ITS 도로 CCTV API 호출 함수
+// ITS 도로 CCTV API 호출 함수 (서버 프록시)
 export const fetchRoadCCTV = async (bounds) => {
-  const apiKey = import.meta.env.VITE_ITS_API_KEY;
-  if (!apiKey) {
-    console.warn('ITS API 키가 설정되지 않았습니다.');
-    return [];
-  }
+  const serverUrl = import.meta.env.VITE_SERVER_URL || 'http://localhost:3000';
 
   try {
     const params = new URLSearchParams({
-      apiKey: apiKey,
-      type: 'all',
-      cctvType: '1',
       minX: bounds.getWest().toString(),
       maxX: bounds.getEast().toString(),
       minY: bounds.getSouth().toString(),
-      maxY: bounds.getNorth().toString(),
-      getType: 'json'
+      maxY: bounds.getNorth().toString()
     });
 
-    const response = await fetch(`https://openapi.its.go.kr:9443/cctvInfo?${params}`);
+    const response = await fetch(`${serverUrl}/api/cctv?${params}`);
     const data = await response.json();
 
     if (data.response && data.response.data) {
@@ -29,7 +21,7 @@ export const fetchRoadCCTV = async (bounds) => {
             lat: parseFloat(cctv.coordy),
             lng: parseFloat(cctv.coordx),
             streamUrl: cctv.cctvurl,
-            type: 'hls',
+            cctvType: cctv.cctvType || '1',
             format: cctv.cctvformat,
             resolution: cctv.cctvresolution
           }))
@@ -39,7 +31,7 @@ export const fetchRoadCCTV = async (bounds) => {
             lat: parseFloat(data.response.data.coordy),
             lng: parseFloat(data.response.data.coordx),
             streamUrl: data.response.data.cctvurl,
-            type: 'hls',
+            cctvType: data.response.data.cctvType || '1',
             format: data.response.data.cctvformat,
             resolution: data.response.data.cctvresolution
           }];
@@ -49,4 +41,12 @@ export const fetchRoadCCTV = async (bounds) => {
     console.error('CCTV 데이터 로드 실패:', error);
     return [];
   }
+};
+
+// CCTV 타입 설명
+export const CCTV_TYPES = {
+  '1': 'HLS (HTTP)',
+  '2': 'MP4 (HTTP)',
+  '4': 'HLS (HTTPS)',
+  '5': 'MP4 (HTTPS)'
 };

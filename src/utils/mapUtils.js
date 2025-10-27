@@ -63,24 +63,20 @@ export function routeIntersectsDangerZone(routeCoords, dangerZones) {
  */
 export async function getRoute(start, end, dangerZones = []) {
   try {
-    const url = `https://router.project-osrm.org/route/v1/foot/${start.lng},${start.lat};${end.lng},${end.lat}?overview=full&geometries=geojson&alternatives=3`;
+    const url = `https://router.project-osrm.org/route/v1/foot/${start.lng},${start.lat};${end.lng},${end.lat}?overview=full&geometries=geojson`;
     const res = await fetch(url);
     const data = await res.json();
     
     if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
-      const routesWithSafety = data.routes.map(route => {
-        const coords = route.geometry.coordinates.map(([lng, lat]) => [lat, lng]);
-        const safety = routeIntersectsDangerZone(coords, dangerZones);
-        return {
-          ...route,
-          coords,
-          safety,
-          score: safety.count * 1000 + route.distance
-        };
-      });
+      const route = data.routes[0];
+      const coords = route.geometry.coordinates.map(([lng, lat]) => [lat, lng]);
+      const safety = routeIntersectsDangerZone(coords, dangerZones);
       
-      routesWithSafety.sort((a, b) => a.score - b.score);
-      return routesWithSafety[0];
+      return {
+        ...route,
+        coords,
+        safety
+      };
     }
     return null;
   } catch (error) {
