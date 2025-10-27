@@ -124,6 +124,7 @@ function MapView({
   const [routeInfo, setRouteInfo] = useState(null);
   const [measureMode, setMeasureMode] = useState(false);
   const [measurePoints, setMeasurePoints] = useState([]);
+  const [hasInitializedMap, setHasInitializedMap] = useState(false);
 
   // 실제 응급시설 API 호출
   const fetchEmergencyFacilities = useCallback(async () => {
@@ -433,8 +434,16 @@ function MapView({
     setCctvStatus('');
     if (!isTracking) {
       clearRoute();
+      setHasInitializedMap(false);
     }
   }, [isTracking, clearRoute]);
+
+  useEffect(() => {
+    if (isTracking && currentLocation && mapInstance && !hasInitializedMap) {
+      mapInstance.setView([currentLocation.lat, currentLocation.lng], 16);
+      setHasInitializedMap(true);
+    }
+  }, [isTracking, currentLocation, mapInstance, hasInitializedMap]);
 
 
 
