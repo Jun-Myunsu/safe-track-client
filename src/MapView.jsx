@@ -121,6 +121,7 @@ function MapView({
   const [missingPersonStatus, setMissingPersonStatus] = useState("");
   const [cctvStatus, setCctvStatus] = useState("");
   const [selectedCCTV, setSelectedCCTV] = useState(null);
+  const [isMobile] = useState(window.innerWidth <= 768);
   const videoRef = useRef(null);
   const hlsRef = useRef(null);
   const [cctvList, setCctvList] = useState([]);
@@ -446,6 +447,9 @@ function MapView({
   }, [measurePoints]);
 
   useEffect(() => {
+    setShowCCTV(false);
+    setCctvList([]);
+    setCctvStatus('');
     if (!isTracking) {
       clearRoute();
     }
@@ -1413,7 +1417,7 @@ function MapView({
         }}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ 
             maxWidth: "900px", 
-            width: window.innerWidth <= 768 ? "95vw" : "auto",
+            width: isMobile ? "95vw" : "auto",
             padding: 0, 
             overflow: "hidden" 
           }}>
@@ -1436,7 +1440,7 @@ function MapView({
                 muted
                 style={{ 
                   width: "100%", 
-                  height: window.innerWidth <= 768 ? "50vh" : "500px", 
+                  height: isMobile ? "50vh" : "500px", 
                   display: "block", 
                   background: "#000" 
                 }}
