@@ -24,7 +24,13 @@
       "Bash(git commit -m \"$(cat <<''EOF''\nfeat: Improve AI chat and modal scrolling UX\n\nApp.jsx changes:\n- Show LocationTracking only when registered and no received shares\n- Better conditional rendering logic\n\nindex.css changes:\n- AI chat messages: Change from fixed height to flexible height\n  - Desktop: min 280px, max 60vh\n  - Mobile: min 320px, max 70vh\n- Add modal body scrolling (max-height: 400px)\n- Add custom scrollbar styling for modal\n  - Dark theme consistent scrollbar\n  - Width: 8px\n  - Track: #1a1a1a\n  - Thumb: #555555 (hover: #777777)\n\nBenefits:\n- AI responses no longer cut off\n- Better readability with scrollable modal\n- Responsive height adjustment\n- Consistent dark theme styling\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
       "Bash(git add safe-track-server/src/services/AIChatService.js)",
       "Bash(git commit -m \"$(cat <<''EOF''\nfix: Increase max_tokens for emergency tips to prevent truncation\n\nIssue:\n- AI responses were being cut off mid-sentence\n- Example: \"응급 상황 시 CPR\" (incomplete)\n- Caused by insufficient max_tokens (150) and overly restrictive prompt\n\nChanges:\n- Increase max_tokens: 150 → 500\n- Update prompt:\n  - Before: \"총 100자 이내로 간결하게\"\n  - After: \"3-5문장으로 구체적이고 실용적으로, 완전한 문장으로 끝내주세요\"\n- Ensures complete, useful safety tips\n\nBenefits:\n- Complete responses without truncation\n- More detailed and practical safety information\n- Better user experience\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
-      "Bash(git add src/services/AIChatService.js)"
+      "Bash(git add src/services/AIChatService.js)",
+      "Bash(npm run dev)",
+      "Bash(npm start)",
+      "Bash(netstat -ano)",
+      "Bash(findstr :3000)",
+      "Bash(taskkill /PID 51792 /F)",
+      "Bash(taskkill //PID 51792 //F)"
     ],
     "deny": [],
     "ask": []

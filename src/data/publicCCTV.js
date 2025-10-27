@@ -1,44 +1,67 @@
-// ITS 도로 CCTV API 호출 함수 (서버 프록시)
+// ITS 도로 CCTV API 호출 함수 (프론트엔드 직접 호출)
 export const fetchRoadCCTV = async (bounds) => {
-  const serverUrl = import.meta.env.VITE_SERVER_URL || 'http://localhost:3000';
-
   try {
+    const apiKey = import.meta.env.VITE_ITS_API_KEY;
+    if (!apiKey) {
+      console.error('VITE_ITS_API_KEY 환경변수가 설정되지 않았습니다.');
+      console.info('프론트엔드 .env 파일에 VITE_ITS_API_KEY=your_key 를 추가하세요.');
+      return [];
+    }
+
     const params = new URLSearchParams({
+      apiKey,
+      type: 'all',
+      cctvType: '4', // HLS (HTTPS)
       minX: bounds.getWest().toString(),
       maxX: bounds.getEast().toString(),
       minY: bounds.getSouth().toString(),
-      maxY: bounds.getNorth().toString()
+      maxY: bounds.getNorth().toString(),
+      getType: 'json'
     });
 
-    const response = await fetch(`${serverUrl}/api/cctv?${params}`);
+    console.log('CCTV API 직접 호출:', {
+      bounds: {
+        west: bounds.getWest().toFixed(4),
+        east: bounds.getEast().toFixed(4),
+        south: bounds.getSouth().toFixed(4),
+        north: bounds.getNorth().toFixed(4)
+      },
+      timestamp: new Date().toISOString()
+    });
+
+    const response = await fetch(`https://openapi.its.go.kr:9443/cctvInfo?${params}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
     const data = await response.json();
 
     if (data.response && data.response.data) {
-      return Array.isArray(data.response.data) 
-        ? data.response.data.map((cctv, index) => ({
-            id: `cctv-${index}-${cctv.coordx}-${cctv.coordy}`,
-            name: cctv.cctvname || 'CCTV',
-            lat: parseFloat(cctv.coordy),
-            lng: parseFloat(cctv.coordx),
-            streamUrl: cctv.cctvurl,
-            cctvType: cctv.cctvType || '1',
-            format: cctv.cctvformat,
-            resolution: cctv.cctvresolution
-          }))
-        : [{
-            id: `cctv-0-${data.response.data.coordx}-${data.response.data.coordy}`,
-            name: data.response.data.cctvname || 'CCTV',
-            lat: parseFloat(data.response.data.coordy),
-            lng: parseFloat(data.response.data.coordx),
-            streamUrl: data.response.data.cctvurl,
-            cctvType: data.response.data.cctvType || '1',
-            format: data.response.data.cctvformat,
-            resolution: data.response.data.cctvresolution
-          }];
+      const items = Array.isArray(data.response.data) ? data.response.data : [data.response.data];
+      const cctvList = items.map((cctv, index) => ({
+        id: `cctv-${index}-${cctv.coordx}-${cctv.coordy}`,
+        name: cctv.cctvname || 'CCTV',
+        lat: parseFloat(cctv.coordy),
+        lng: parseFloat(cctv.coordx),
+        streamUrl: cctv.cctvurl,
+        cctvType: '4',
+        format: cctv.cctvformat,
+        resolution: cctv.cctvresolution
+      }));
+
+      console.log(`✅ ${cctvList.length}개 CCTV 로드 완료`);
+      return cctvList;
     }
+
     return [];
   } catch (error) {
-    console.error('CCTV 데이터 로드 실패:', error);
+    console.error('❌ CCTV 데이터 로드 실패:', error.message || error);
     return [];
   }
 };
