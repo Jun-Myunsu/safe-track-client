@@ -66,26 +66,7 @@ function MapUpdater({
     }
   }, [map, setMapInstance]);
 
-  useEffect(() => {
-    const otherUserLocations = locations.filter(
-      (loc) => loc.userId !== currentUserId
-    );
-    const bounds = map.getBounds();
 
-    if (otherUserLocations.length > 0) {
-      const latestLocation = otherUserLocations[otherUserLocations.length - 1];
-      if (!bounds.contains([latestLocation.lat, latestLocation.lng])) {
-        map.setView([latestLocation.lat, latestLocation.lng], map.getZoom());
-        setMapCenter([latestLocation.lat, latestLocation.lng]);
-      }
-    } else if (
-      currentLocation &&
-      !bounds.contains([currentLocation.lat, currentLocation.lng])
-    ) {
-      map.setView([currentLocation.lat, currentLocation.lng], map.getZoom());
-      setMapCenter([currentLocation.lat, currentLocation.lng]);
-    }
-  }, [currentLocation, locations, currentUserId, map, setMapCenter]);
 
   useEffect(() => {
     const handleMoveEnd = () => {
