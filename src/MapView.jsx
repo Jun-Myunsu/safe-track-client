@@ -1103,6 +1103,20 @@ function MapView({
           opacity={0.8}
         />
 
+        {/* 대형교통사고발생정보 WMS 레이어 (항상 표시) */}
+        <WMSTileLayer
+          key={`traffic-accident-${mapType}`}
+          url={`http://www.safemap.go.kr/openApiService/wms/getLayerData.do?apikey=${
+            import.meta.env.VITE_SAFEMAP_TOKEN
+          }`}
+          layers="A2SM_TFCACDSTTUS_BIG"
+          styles="A2SM_TFCACDSTTUS_BIG"
+          format="image/png"
+          transparent={true}
+          attribution="안전지도 대형교통사고발생정보"
+          opacity={0.7}
+        />
+
         {/* 어린이대상범죄주의구간 WMS 레이어 */}
         {showChildCrimeZones && (
           <WMSTileLayer
