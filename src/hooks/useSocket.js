@@ -43,7 +43,9 @@ export function useSocket(handlers) {
         if (handlers.friends && handlers.setFriends) {
           handlers.setFriends(prev => prev.map(friend => {
             const onlineUser = users.find(user => user.id === friend.id)
-            return onlineUser ? { ...friend, isOnline: onlineUser.isOnline, isTracking: onlineUser.isTracking } : friend
+            return onlineUser 
+              ? { ...friend, isOnline: true, isTracking: onlineUser.isTracking } 
+              : { ...friend, isOnline: false, isTracking: false }
           }))
         }
       },

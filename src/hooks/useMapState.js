@@ -9,7 +9,7 @@ export function useMapState(isTracking) {
   const [showEmergencyBells, setShowEmergencyBells] = useState(false);
   const [showWomenSafety, setShowWomenSafety] = useState(false);
   const [showChildCrimeZones, setShowChildCrimeZones] = useState(false);
-  const [showMurderStats, setShowMurderStats] = useState(true);
+  const [showMurderStats, setShowMurderStats] = useState(false);
   const [showCCTV, setShowCCTV] = useState(false);
   const [showMissingPersons, setShowMissingPersons] = useState(false);
   const [showMapButtons, setShowMapButtons] = useState(true);

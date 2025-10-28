@@ -4,6 +4,7 @@ import L from "leaflet";
 import Compass from "./components/Compass";
 import DangerZoneOverlay from "./components/DangerZoneOverlay";
 import MissingPersonMap from "./components/MissingPersonMap";
+import RoadEventPanel from "./components/RoadEventPanel";
 import { analyzeDangerZones } from "./services/dangerPredictionService";
 import { fetchRoadCCTV } from "./data/publicCCTV";
 import { getRoute } from "./utils/mapUtils";
@@ -124,7 +125,9 @@ function MapView({
   const [routeInfo, setRouteInfo] = useState(null);
   const [measureMode, setMeasureMode] = useState(false);
   const [measurePoints, setMeasurePoints] = useState([]);
-  const [hasInitializedMap, setHasInitializedMap] = useState(false);
+  const [roadEvents, setRoadEvents] = useState([]);
+  const [showRoadEvents, setShowRoadEvents] = useState(false);
+  const [hasMovedToMyLocation, setHasMovedToMyLocation] = useState(false);
 
   // 실제 응급시설 API 호출
   const fetchEmergencyFacilities = useCallback(async () => {
@@ -219,6 +222,51 @@ function MapView({
     };
     loadCCTV();
   }, [showCCTV]);
+
+  // 돌발정보 API - 임시 비활성화 (API 키 승인 대기 중)
+  // useEffect(() => {
+  //   const loadRoadEvents = async () => {
+  //     if (!mapBounds || !currentLocation) return;
+  //     try {
+  //       const serverUrl = import.meta.env.VITE_SERVER_URL || 'http://localhost:3000';
+  //       const bounds = mapBounds;
+  //       const centerLat = (bounds.getNorth() + bounds.getSouth()) / 2;
+  //       const centerLng = (bounds.getEast() + bounds.getWest()) / 2;
+  //       const latDiff = 0.5;
+  //       const lngDiff = 0.5;
+  //       
+  //       const url = `${serverUrl}/api/road-events?minX=${centerLng - lngDiff}&maxX=${centerLng + lngDiff}&minY=${centerLat - latDiff}&maxY=${centerLat + latDiff}`;
+  //       console.log('🚨 돌발정보 요청 (넓은 범위):', { centerLat, centerLng, range: '±0.5도' });
+  //       
+  //       const response = await fetch(url);
+  //       const data = await response.json();
+  //       console.log('🚨 돌발정보 응답:', { resultCode: data.resultCode, resultMsg: data.resultMsg, itemCount: data.body?.items?.length || 0 });
+  //       
+  //       if (data.body?.items) {
+  //         const events = data.body.items.map(item => ({
+  //           eventType: item.type === '1' ? '교통사고' : item.type === '2' ? '공사' : item.type === '3' ? '기상' : item.type === '4' ? '재난' : '기타',
+  //           roadName: item.roadName || '도로명 없음',
+  //           roadDrcType: item.roadDrcType,
+  //           message: item.message || '상세 정보 없음',
+  //           lanesBlocked: item.lanesBlocked,
+  //           startDate: item.startDate,
+  //           lat: parseFloat(item.coordY),
+  //           lng: parseFloat(item.coordX)
+  //         }));
+  //         console.log(`✅ ${events.length}건의 돌발정보 로드 완료`);
+  //         setRoadEvents(events);
+  //         if (events.length > 0) setShowRoadEvents(true);
+  //       } else {
+  //         console.log('ℹ️ 현재 돌발정보 없음 (resultCode:', data.resultCode, ')');
+  //         setRoadEvents([]);
+  //       }
+  //     } catch (error) {
+  //       console.error('❌ 돌발정보 로드 실패:', error);
+  //       setRoadEvents([]);
+  //     }
+  //   };
+  //   if (isTracking) loadRoadEvents();
+  // }, [mapBounds, currentLocation, isTracking]);
 
   // HLS.js 초기화
   useEffect(() => {
@@ -434,16 +482,35 @@ function MapView({
     setCctvStatus('');
     if (!isTracking) {
       clearRoute();
-      setHasInitializedMap(false);
+      setHasMovedToMyLocation(false);
     }
   }, [isTracking, clearRoute]);
 
+  // 내 위치 추적 시작 시 첫 위치로 이동 (이후 위치 업데이트 시에는 이동 안 함)
   useEffect(() => {
-    if (isTracking && currentLocation && mapInstance && !hasInitializedMap) {
+    if (isTracking && currentLocation && mapInstance && !hasMovedToMyLocation) {
       mapInstance.setView([currentLocation.lat, currentLocation.lng], 16);
-      setHasInitializedMap(true);
+      setHasMovedToMyLocation(true);
     }
-  }, [isTracking, currentLocation, mapInstance, hasInitializedMap]);
+  }, [isTracking, currentLocation, mapInstance, hasMovedToMyLocation]);
+
+  // 위치 공유 받을 때 상대방이 지도 영역을 벗어나면 중심으로 이동
+  useEffect(() => {
+    if (!mapInstance || !locations.length || isTracking) return;
+    
+    // 내가 아닌 다른 사용자의 최신 위치 찾기
+    const otherUserLocation = locations.find(loc => loc.userId !== currentUserId);
+    
+    if (otherUserLocation) {
+      const bounds = mapInstance.getBounds();
+      const isInBounds = bounds.contains([otherUserLocation.lat, otherUserLocation.lng]);
+      
+      // 상대방이 지도 영역을 벗어났을 때만 이동
+      if (!isInBounds) {
+        mapInstance.setView([otherUserLocation.lat, otherUserLocation.lng], mapInstance.getZoom());
+      }
+    }
+  }, [locations, mapInstance, currentUserId, isTracking]);
 
 
 
@@ -716,6 +783,16 @@ function MapView({
           >
             🔍
           </button>
+
+          {/* 도로 돌발정보 버튼 - 임시 비활성화 */}
+          {/* <button
+            className={`map-type-btn ${roadEvents.length > 0 ? "active" : ""}`}
+            onClick={() => setShowRoadEvents(!showRoadEvents)}
+            disabled={!isTracking || roadEvents.length === 0}
+            title={!isTracking ? "위치 추적을 시작하세요" : roadEvents.length > 0 ? `돌발정보 ${roadEvents.length}건` : "돌발정보 없음"}
+          >
+            🚨
+          </button> */}
         </div>
       )}
 
@@ -972,6 +1049,11 @@ function MapView({
           {missingPersonStatus}
         </div>
       )}
+
+      {/* 도로 돌발정보 패널 - 임시 비활성화 */}
+      {/* {showRoadEvents && roadEvents.length > 0 && (
+        <RoadEventPanel events={roadEvents} onClose={() => setShowRoadEvents(false)} />
+      )} */}
 
       {/* AI 분석 로딩 오버레이 */}
       {isAnalyzing && (
