@@ -89,7 +89,15 @@ https://safe-track-client.vercel.app/
 
 ## 라이선스
 
-MIT License
+Proprietary License - All Rights Reserved
+
+이 소프트웨어는 저작권자의 독점 자산입니다.
+- ❌ 상업적 사용 금지
+- ❌ 수정 금지
+- ❌ 재배포 금지
+- ✅ 개인적 학습 목적의 열람만 허용
+
+자세한 내용은 [LICENSE](LICENSE) 파일을 참조하세요.
 
 ## 주요 기능
 

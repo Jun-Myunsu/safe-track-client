@@ -1,8 +1,11 @@
 {
   "name": "safe-track-client",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
+  "license": "UNLICENSED",
+  "author": "Safe Track Team",
+  "description": "실시간 위치 공유 및 안전 관리 웹 애플리케이션",
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 3001",
     "build": "vite build",
