@@ -128,6 +128,7 @@ function MapView({
   const [roadEvents, setRoadEvents] = useState([]);
   const [showRoadEvents, setShowRoadEvents] = useState(false);
   const [hasMovedToMyLocation, setHasMovedToMyLocation] = useState(false);
+  const [selectedRoadEvent, setSelectedRoadEvent] = useState(null);
 
   // 실제 응급시설 API 호출
   const fetchEmergencyFacilities = useCallback(async () => {
@@ -190,8 +191,15 @@ function MapView({
   }, [mapBounds, showEmergency]);
 
   useEffect(() => {
-    fetchEmergencyFacilities();
-  }, [fetchEmergencyFacilities, mapType]);
+    if (!showEmergency) return;
+    
+    // 디바운스: 마지막 호출 후 2초 대기
+    const timer = setTimeout(() => {
+      fetchEmergencyFacilities();
+    }, 2000);
+    
+    return () => clearTimeout(timer);
+  }, [showEmergency, mapBounds]);
 
   useEffect(() => {
     const loadCCTV = async () => {
@@ -223,50 +231,65 @@ function MapView({
     loadCCTV();
   }, [showCCTV]);
 
-  // 돌발정보 API - 임시 비활성화 (API 키 승인 대기 중)
-  // useEffect(() => {
-  //   const loadRoadEvents = async () => {
-  //     if (!mapBounds || !currentLocation) return;
-  //     try {
-  //       const serverUrl = import.meta.env.VITE_SERVER_URL || 'http://localhost:3000';
-  //       const bounds = mapBounds;
-  //       const centerLat = (bounds.getNorth() + bounds.getSouth()) / 2;
-  //       const centerLng = (bounds.getEast() + bounds.getWest()) / 2;
-  //       const latDiff = 0.5;
-  //       const lngDiff = 0.5;
-  //       
-  //       const url = `${serverUrl}/api/road-events?minX=${centerLng - lngDiff}&maxX=${centerLng + lngDiff}&minY=${centerLat - latDiff}&maxY=${centerLat + latDiff}`;
-  //       console.log('🚨 돌발정보 요청 (넓은 범위):', { centerLat, centerLng, range: '±0.5도' });
-  //       
-  //       const response = await fetch(url);
-  //       const data = await response.json();
-  //       console.log('🚨 돌발정보 응답:', { resultCode: data.resultCode, resultMsg: data.resultMsg, itemCount: data.body?.items?.length || 0 });
-  //       
-  //       if (data.body?.items) {
-  //         const events = data.body.items.map(item => ({
-  //           eventType: item.type === '1' ? '교통사고' : item.type === '2' ? '공사' : item.type === '3' ? '기상' : item.type === '4' ? '재난' : '기타',
-  //           roadName: item.roadName || '도로명 없음',
-  //           roadDrcType: item.roadDrcType,
-  //           message: item.message || '상세 정보 없음',
-  //           lanesBlocked: item.lanesBlocked,
-  //           startDate: item.startDate,
-  //           lat: parseFloat(item.coordY),
-  //           lng: parseFloat(item.coordX)
-  //         }));
-  //         console.log(`✅ ${events.length}건의 돌발정보 로드 완료`);
-  //         setRoadEvents(events);
-  //         if (events.length > 0) setShowRoadEvents(true);
-  //       } else {
-  //         console.log('ℹ️ 현재 돌발정보 없음 (resultCode:', data.resultCode, ')');
-  //         setRoadEvents([]);
-  //       }
-  //     } catch (error) {
-  //       console.error('❌ 돌발정보 로드 실패:', error);
-  //       setRoadEvents([]);
-  //     }
-  //   };
-  //   if (isTracking) loadRoadEvents();
-  // }, [mapBounds, currentLocation, isTracking]);
+  // 돌발정보 API - 위치 추적 시작 시에만 요청
+  const loadRoadEventsRef = useRef(false);
+  useEffect(() => {
+    const loadRoadEvents = async () => {
+      if (!currentLocation || !mapBounds) return;
+      try {
+        const serverUrl = import.meta.env.VITE_SERVER_URL || 'http://localhost:3000';
+        
+        // 현재 위치 기준 반경 5km
+        const latDiff = 0.05;
+        const lngDiff = 0.05;
+        const centerLat = (mapBounds.getNorth() + mapBounds.getSouth()) / 2;
+        const centerLng = (mapBounds.getEast() + mapBounds.getWest()) / 2;
+        
+        const url = `${serverUrl}/api/road-events?minX=${centerLng - lngDiff}&maxX=${centerLng + lngDiff}&minY=${centerLat - latDiff}&maxY=${centerLat + latDiff}`;
+        console.log('🚨 돌발정보 요청:', { centerLat, centerLng, latDiff: latDiff.toFixed(4), lngDiff: lngDiff.toFixed(4) });
+        
+        const response = await fetch(url, { 
+          signal: AbortSignal.timeout(25000)
+        });
+        const data = await response.json();
+        console.log('🚨 돌발정보 응답:', { resultCode: data.resultCode, resultMsg: data.resultMsg, itemCount: data.body?.items?.length || 0 });
+        
+        if (data.body?.items && data.body.items.length > 0) {
+          const events = data.body.items.map(item => ({
+            eventType: item.type === '1' ? '교통사고' : item.type === '2' ? '공사' : item.type === '3' ? '기상' : item.type === '4' ? '재난' : '기타',
+            roadName: item.roadName || '도로명 없음',
+            roadDrcType: item.roadDrcType,
+            message: item.message || '상세 정보 없음',
+            lanesBlocked: item.lanesBlocked,
+            startDate: item.startDate,
+            lat: parseFloat(item.coordY),
+            lng: parseFloat(item.coordX)
+          }));
+          console.log(`✅ ${events.length}건의 돌발정보 로드 완료`);
+          setRoadEvents(events);
+          if (events.length > 0) setShowRoadEvents(true);
+        } else {
+          console.log('ℹ️ 현재 돌발정보 없음');
+          setRoadEvents([]);
+        }
+      } catch (error) {
+        if (error.name === 'TimeoutError' || error.name === 'AbortError') {
+          console.warn('⏱️ 돌발정보 API 타임아웃 (서버 응답 지연)');
+        } else {
+          console.error('❌ 돌발정보 로드 실패:', error.message);
+        }
+        setRoadEvents([]);
+      }
+    };
+    if (isTracking && currentLocation && mapBounds && !loadRoadEventsRef.current && hasMovedToMyLocation) {
+      loadRoadEventsRef.current = true;
+      loadRoadEvents();
+    } else if (!isTracking) {
+      loadRoadEventsRef.current = false;
+      setRoadEvents([]);
+      setShowRoadEvents(false);
+    }
+  }, [isTracking, hasMovedToMyLocation]);
 
   // HLS.js 초기화
   useEffect(() => {
@@ -784,15 +807,7 @@ function MapView({
             🔍
           </button>
 
-          {/* 도로 돌발정보 버튼 - 임시 비활성화 */}
-          {/* <button
-            className={`map-type-btn ${roadEvents.length > 0 ? "active" : ""}`}
-            onClick={() => setShowRoadEvents(!showRoadEvents)}
-            disabled={!isTracking || roadEvents.length === 0}
-            title={!isTracking ? "위치 추적을 시작하세요" : roadEvents.length > 0 ? `돌발정보 ${roadEvents.length}건` : "돌발정보 없음"}
-          >
-            🚨
-          </button> */}
+
         </div>
       )}
 
@@ -864,6 +879,14 @@ function MapView({
               title="거리 측정"
             >
               📏
+            </button>
+            <button
+              className={`map-type-btn ${showRoadEvents ? "active" : ""}`}
+              onClick={() => setShowRoadEvents(!showRoadEvents)}
+              disabled={roadEvents.length === 0}
+              title={roadEvents.length > 0 ? `돌발정보 ${roadEvents.length}건` : "돌발정보 없음"}
+            >
+              ❗
             </button>
           </>
         )}
@@ -1050,10 +1073,65 @@ function MapView({
         </div>
       )}
 
-      {/* 도로 돌발정보 패널 - 임시 비활성화 */}
-      {/* {showRoadEvents && roadEvents.length > 0 && (
+      {/* 도로 돌발정보 패널 */}
+      {showRoadEvents && roadEvents.length > 0 && (
         <RoadEventPanel events={roadEvents} onClose={() => setShowRoadEvents(false)} />
-      )} */}
+      )}
+
+      {/* 선택된 돌발정보 상세 팝업 */}
+      {selectedRoadEvent && (
+        <div
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            zIndex: 10000,
+            backgroundColor: "rgba(0, 0, 0, 0.95)",
+            padding: "16px",
+            borderRadius: "12px",
+            border: `2px solid ${selectedRoadEvent.eventType === '교통사고' ? '#ef4444' : selectedRoadEvent.eventType === '공사' ? '#f59e0b' : selectedRoadEvent.eventType === '기상' ? '#3b82f6' : '#dc2626'}`,
+            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.5)",
+            maxWidth: "90vw",
+            width: "400px",
+            color: "#fff"
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '1.2rem' }}>🚨</span>
+              <span style={{ fontWeight: 'bold', color: selectedRoadEvent.eventType === '교통사고' ? '#ef4444' : selectedRoadEvent.eventType === '공사' ? '#f59e0b' : selectedRoadEvent.eventType === '기상' ? '#3b82f6' : '#dc2626' }}>
+                {selectedRoadEvent.eventType}
+              </span>
+            </div>
+            <button onClick={() => setSelectedRoadEvent(null)} style={{
+              background: 'transparent',
+              border: 'none',
+              color: '#aaa',
+              fontSize: '1.5rem',
+              cursor: 'pointer',
+              padding: 0,
+              lineHeight: 1
+            }}>×</button>
+          </div>
+
+          <div style={{ fontSize: '0.9rem', color: '#e0e0e0' }}>
+            <div style={{ marginBottom: '8px' }}>
+              <strong style={{ color: '#fff' }}>{selectedRoadEvent.roadName}</strong>
+              {selectedRoadEvent.roadDrcType && <span style={{ marginLeft: '8px', color: '#aaa' }}>({selectedRoadEvent.roadDrcType})</span>}
+            </div>
+            <div style={{ color: '#fbbf24', marginBottom: '4px' }}>{selectedRoadEvent.message}</div>
+            {selectedRoadEvent.lanesBlocked && (
+              <div style={{ fontSize: '0.85rem', color: '#f87171' }}>🚧 {selectedRoadEvent.lanesBlocked}</div>
+            )}
+            {selectedRoadEvent.startDate && (
+              <div style={{ fontSize: '0.8rem', color: '#999', marginTop: '8px' }}>
+                발생: {selectedRoadEvent.startDate.replace(/(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/, '$1-$2-$3 $4:$5')}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* AI 분석 로딩 오버레이 */}
       {isAnalyzing && (
@@ -1235,7 +1313,7 @@ function MapView({
         {myLocationHistory && myLocationHistory.length > 1 && isTracking && (
           <Polyline
             positions={myLocationHistory.map(loc => [loc.lat, loc.lng])}
-            color="#000000"
+            color="#3b82f6"
             weight={3}
             opacity={0.8}
             pathOptions={{ lineCap: 'round', lineJoin: 'round' }}
@@ -1461,6 +1539,24 @@ function MapView({
             </Popup>
           </Marker>
         )}
+
+        {/* 도로 돌발정보 마커 */}
+        {roadEvents.map((event, index) => (
+          <Marker
+            key={`road-event-${index}`}
+            position={[event.lat, event.lng]}
+            icon={L.divIcon({
+              html: `<div style="background: ${event.eventType === '교통사고' ? '#ef4444' : event.eventType === '공사' ? '#f59e0b' : event.eventType === '기상' ? '#3b82f6' : '#dc2626'}; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; font-size: 11px; cursor: pointer;">🚨</div>`,
+              iconSize: [20, 20],
+              iconAnchor: [10, 10],
+              className: 'road-event-marker'
+            })}
+            zIndexOffset={700}
+            eventHandlers={{
+              click: () => setSelectedRoadEvent(event)
+            }}
+          />
+        ))}
 
         {/* CCTV 마커 */}
         {showCCTV && cctvList.map((cctv) => (

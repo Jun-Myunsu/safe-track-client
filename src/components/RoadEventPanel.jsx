@@ -19,10 +19,10 @@ export default function RoadEventPanel({ events, onClose }) {
 
   return (
     <div style={{
-      position: 'fixed',
-      bottom: '80px',
+      position: 'absolute',
+      top: '50%',
       left: '50%',
-      transform: 'translateX(-50%)',
+      transform: 'translate(-50%, -50%)',
       zIndex: 10000,
       backgroundColor: 'rgba(0, 0, 0, 0.95)',
       padding: '16px',

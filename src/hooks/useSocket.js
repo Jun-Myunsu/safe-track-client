@@ -71,7 +71,17 @@ export function useSocket(handlers) {
         }
       },
       locationReceived: (data) => {
-        handlers.setLocations(prev => [...prev, data])
+        handlers.setLocations(prev => {
+          const MAX_LOCATIONS_PER_USER = 100
+          const userLocations = prev.filter(loc => loc.userId === data.userId)
+          const otherLocations = prev.filter(loc => loc.userId !== data.userId)
+          
+          if (userLocations.length >= MAX_LOCATIONS_PER_USER) {
+            userLocations.shift()
+          }
+          
+          return [...otherLocations, ...userLocations, data]
+        })
         if (data.path && data.path.length > 1) {
           handlers.setUserPaths(prev => {
             const newPaths = new Map(prev)
