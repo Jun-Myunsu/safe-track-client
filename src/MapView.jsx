@@ -231,28 +231,22 @@ function MapView({
     loadCCTV();
   }, [showCCTV]);
 
-  // 돌발정보 API - 위치 추적 시작 시에만 요청
+  // 돌발정보 API - Vercel 서버리스 함수 프록시 사용
   const loadRoadEventsRef = useRef(false);
   useEffect(() => {
     const loadRoadEvents = async () => {
       if (!currentLocation || !mapBounds) return;
       try {
-        const serverUrl = import.meta.env.VITE_SERVER_URL || 'http://localhost:3000';
-        
-        // 현재 위치 기준 반경 5km
         const latDiff = 0.05;
         const lngDiff = 0.05;
         const centerLat = (mapBounds.getNorth() + mapBounds.getSouth()) / 2;
         const centerLng = (mapBounds.getEast() + mapBounds.getWest()) / 2;
         
-        const url = `${serverUrl}/api/road-events?minX=${centerLng - lngDiff}&maxX=${centerLng + lngDiff}&minY=${centerLat - latDiff}&maxY=${centerLat + latDiff}`;
-        console.log('🚨 돌발정보 요청:', { centerLat, centerLng, latDiff: latDiff.toFixed(4), lngDiff: lngDiff.toFixed(4) });
+        const url = `/api/road-events?minX=${centerLng - lngDiff}&maxX=${centerLng + lngDiff}&minY=${centerLat - latDiff}&maxY=${centerLat + latDiff}`;
+        console.log('🚨 돌발정보 요청:', { centerLat, centerLng });
         
-        const response = await fetch(url, { 
-          signal: AbortSignal.timeout(25000)
-        });
+        const response = await fetch(url, { signal: AbortSignal.timeout(10000) });
         const data = await response.json();
-        console.log('🚨 돌발정보 응답:', { resultCode: data.resultCode, resultMsg: data.resultMsg, itemCount: data.body?.items?.length || 0 });
         
         if (data.body?.items && data.body.items.length > 0) {
           const events = data.body.items.map(item => ({
@@ -265,7 +259,7 @@ function MapView({
             lat: parseFloat(item.coordY),
             lng: parseFloat(item.coordX)
           }));
-          console.log(`✅ ${events.length}건의 돌발정보 로드 완료`);
+          console.log(`✅ ${events.length}건의 돌발정보 로드`);
           setRoadEvents(events);
           if (events.length > 0) setShowRoadEvents(true);
         } else {
@@ -273,11 +267,7 @@ function MapView({
           setRoadEvents([]);
         }
       } catch (error) {
-        if (error.name === 'TimeoutError' || error.name === 'AbortError') {
-          console.warn('⏱️ 돌발정보 API 타임아웃 (서버 응답 지연)');
-        } else {
-          console.error('❌ 돌발정보 로드 실패:', error.message);
-        }
+        console.error('❌ 돌발정보 로드 실패:', error.message);
         setRoadEvents([]);
       }
     };
