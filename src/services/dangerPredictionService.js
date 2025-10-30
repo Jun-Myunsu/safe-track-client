@@ -6,7 +6,7 @@
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3000';
 
 // 위험 예측 분석 범위 (미터)
-export const DANGER_ANALYSIS_RADIUS = 1000; // 도보 10~12분 거리
+export const DANGER_ANALYSIS_RADIUS = 5000; // 도보 약 1시간 거리
 
 /**
  * 기본 안전 정보 생성 (API 키 없을 때 또는 에러 시)

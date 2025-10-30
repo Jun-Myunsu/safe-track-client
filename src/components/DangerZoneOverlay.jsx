@@ -10,9 +10,15 @@ function DangerZoneOverlay({ dangerZones = [] }) {
     return null;
   }
 
+  // 위험도 순서로 정렬 (safe -> low -> medium -> high)
+  const riskOrder = { safe: 0, low: 1, medium: 2, high: 3 };
+  const sortedZones = [...dangerZones].sort((a, b) => 
+    riskOrder[a.riskLevel] - riskOrder[b.riskLevel]
+  );
+
   return (
     <>
-      {dangerZones.map((zone, index) => (
+      {sortedZones.map((zone, index) => (
         <Circle
           key={`danger-zone-${index}-${zone.lat}-${zone.lng}`}
           center={[zone.lat, zone.lng]}
@@ -20,8 +26,8 @@ function DangerZoneOverlay({ dangerZones = [] }) {
           pathOptions={{
             color: getDangerZoneBorderColor(zone.riskLevel),
             fillColor: getDangerZoneColor(zone.riskLevel),
-            fillOpacity: 0.4,
-            weight: 2,
+            fillOpacity: 0.5,
+            weight: 3,
             dashArray: '5, 5'
           }}
         />
